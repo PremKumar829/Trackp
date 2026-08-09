@@ -43,12 +43,16 @@ An interactive 3D landing page and real-time Telegram channel & group tracking s
 
 ## 📦 Production Deployment
 
-### Option 1: Render.com / Railway / Fly.io (Recommended Node.js Hosting)
+### Option 1: Render.com Web Service Deployment (Recommended)
 
-1. Connect your GitHub repository to [Render](https://render.com) or [Railway](https://railway.app).
-2. Set Build Command: `npm run build`
-3. Set Start Command: `npm run start`
-4. Add Environment Variables (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID`, `APP_URL`).
+1. **Connect Repository**: Connect your GitHub repo (`https://github.com/PremKumar829/Trackp`) to [Render](https://render.com).
+2. **Build Command**: Set to `npm install && npm run build` (or leave default, as `"postinstall": "npm run build"` will run automatically).
+3. **Start Command**: Set to `npm run start` (or `node dist/server.cjs`).
+4. **Environment Variables** (In Render Dashboard -> Environment):
+   - `TELEGRAM_BOT_TOKEN`: Your Telegram Bot Token from @BotFather
+   - `TELEGRAM_ADMIN_CHAT_ID`: Your Telegram Chat ID
+   - `APP_URL`: Your Render App Web URL (e.g., `https://trackp.onrender.com`)
+5. Click **Save Changes & Manual Deploy** -> **Deploy latest commit**.
 
 ### Option 2: VPS (Ubuntu / Nginx / PM2)
 

@@ -189,44 +189,7 @@ export default function App() {
       {/* 3D Particle ambient background when viewing Ad Landing page */}
       {viewMode === 'ad' && <ParticleBackground themePreset={campaign.themePreset} />}
 
-      {/* Mode Switcher Floating Toggle Button */}
-      <div className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 bg-slate-900/95 backdrop-blur-md p-1.5 rounded-full border border-slate-700 shadow-2xl">
-        <button
-          onClick={() => setViewMode('ad')}
-          className={`py-2 px-3 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-            viewMode === 'ad'
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <Eye className="w-3.5 h-3.5" />
-          <span>3D Ad Page</span>
-        </button>
-
-        <button
-          onClick={() => setViewMode('public-analytics')}
-          className={`py-2 px-3 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-            viewMode === 'public-analytics'
-              ? 'bg-sky-600 text-white shadow-md'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <BarChart3 className="w-3.5 h-3.5 text-sky-300" />
-          <span>Public Analytics</span>
-        </button>
-
-        <button
-          onClick={() => setViewMode('admin')}
-          className={`py-2 px-3 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-            viewMode === 'admin'
-              ? 'bg-indigo-600 text-white shadow-md'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Admin Control</span>
-        </button>
-      </div>
+      {/* Mode Switcher Floating Toggle Bar hidden by default for clean end-user presentation */}
 
       {/* Mode 1: Public 3D Ad Landing Page */}
       {viewMode === 'ad' && (
