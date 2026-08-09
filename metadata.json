@@ -1,0 +1,6 @@
+{
+  "name": "3D Telegram Ad Landing Page & Conversion Tracker",
+  "description": "High-converting 3D ad page for Telegram channels with real-time member visit, click, and join tracking analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
