@@ -6,7 +6,7 @@ import {
   Users, MousePointerClick, UserCheck, TrendingUp, RefreshCw, Download, Settings, Link as LinkIcon,
   Palette, Eye, ExternalLink, Copy, Check, Filter, ShieldCheck, Sparkles, Smartphone, Globe, Clock,
   ArrowRight, Flame, Layers, Play, RotateCcw, Bot, Send, MessageSquare, CheckCircle2, AlertCircle,
-  Terminal, Zap, Lock, EyeOff, MessageCircle, BellRing
+  Terminal, Zap, Lock, EyeOff, MessageCircle, BellRing, Trash2
 } from 'lucide-react';
 import { CampaignConfig, AnalyticsSummary, AvatarPreset, ThemePreset } from '../types';
 
@@ -102,6 +102,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   ]);
   const [isSendingCmd, setIsSendingCmd] = useState(false);
+
+  // Password Change State
+  const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
+  const [passMessage, setPassMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPasswordInput || newPasswordInput.length < 3) {
+      setPassMessage({ type: 'error', text: 'Password must be at least 3 characters long.' });
+      return;
+    }
+    if (newPasswordInput !== confirmPasswordInput) {
+      setPassMessage({ type: 'error', text: 'Passwords do not match. Please verify both inputs.' });
+      return;
+    }
+    onUpdateCampaign({ adminPassword: newPasswordInput });
+    setPassMessage({ type: 'success', text: '🎉 Admin password successfully updated!' });
+    setNewPasswordInput('');
+    setConfirmPasswordInput('');
+  };
 
   const appUrl = window.location.origin;
   const trackingUrl = `${appUrl}/?utm_source=${utmSource}`;
@@ -371,6 +392,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             <RefreshCw className="w-4 h-4 text-blue-400" />
             <span className="hidden sm:inline">Refresh</span>
+          </button>
+
+          <button
+            onClick={() => {
+              if (window.confirm('⚠️ Are you sure you want to reset ALL analytics data to 0? This action will clear all visits, clicks, and joins.')) {
+                onResetAnalytics();
+              }
+            }}
+            className="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl transition-all border border-rose-500/20 cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+            title="Reset All Analytics Data to 0"
+          >
+            <Trash2 className="w-4 h-4 text-rose-400" />
+            <span className="hidden sm:inline">Reset Data</span>
           </button>
 
           <a
@@ -703,9 +737,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-1">
-                      Telegram Channel Destination URL
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-white/40 uppercase tracking-widest block">
+                        Telegram Channel Destination URL
+                      </label>
+                      {campaign.telegramLink && (
+                        <button
+                          type="button"
+                          onClick={() => onUpdateCampaign({ telegramLink: '' })}
+                          className="text-[10px] text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 className="w-3 h-3" /> Clear Link
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="text"
                       value={campaign.telegramLink}
@@ -716,9 +761,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-1">
-                      Telegram VIP Group Destination URL (Q&A)
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-white/40 uppercase tracking-widest block">
+                        Telegram VIP Group Destination URL (Q&A)
+                      </label>
+                      {campaign.telegramGroupLink && (
+                        <button
+                          type="button"
+                          onClick={() => onUpdateCampaign({ telegramGroupLink: '' })}
+                          className="text-[10px] text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 className="w-3 h-3" /> Clear Link
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="text"
                       value={campaign.telegramGroupLink || ''}
@@ -839,6 +895,75 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <span className="text-[10px] text-white/40">Confirm popup to count joins</span>
                 </div>
               </label>
+            </div>
+
+            {/* Admin Password Security Card */}
+            <div className="pt-6 border-t border-white/10">
+              <div className="bg-gradient-to-r from-rose-950/30 to-slate-900 border border-rose-500/20 rounded-2xl p-5 sm:p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+                    <Lock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      Admin Gate Password Protection
+                    </h3>
+                    <p className="text-xs text-white/50">
+                      Update your admin dashboard password. Current password is <code className="text-rose-300 font-mono bg-rose-950/80 px-1.5 py-0.5 rounded">{campaign.adminPassword || 'vyrnxy123'}</code>
+                    </p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleChangePassword} className="space-y-3 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold text-white/50 uppercase block mb-1">
+                        New Admin Password
+                      </label>
+                      <input
+                        type="password"
+                        value={newPasswordInput}
+                        onChange={(e) => setNewPasswordInput(e.target.value)}
+                        placeholder="Enter new password..."
+                        className="w-full px-3.5 py-2.5 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-hidden focus:border-rose-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-white/50 uppercase block mb-1">
+                        Confirm New Password
+                      </label>
+                      <input
+                        type="password"
+                        value={confirmPasswordInput}
+                        onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                        placeholder="Re-enter new password..."
+                        className="w-full px-3.5 py-2.5 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-hidden focus:border-rose-500"
+                      />
+                    </div>
+                  </div>
+
+                  {passMessage && (
+                    <div className={`p-2.5 rounded-xl text-xs font-semibold ${
+                      passMessage.type === 'success'
+                        ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                        : 'bg-rose-500/10 text-rose-300 border border-rose-500/20'
+                    }`}>
+                      {passMessage.text}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="submit"
+                      className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shadow-lg shadow-rose-600/20 flex items-center gap-1.5"
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Update Admin Password</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
 
           </div>
@@ -1128,6 +1253,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           >
                             <ExternalLink className="w-4 h-4" />
                           </a>
+
+                          <button
+                            onClick={() => handleRemoveDomain(dom)}
+                            className="px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+                            title="Delete this tracking link domain"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Delete</span>
+                          </button>
                         </div>
                       </div>
                     );

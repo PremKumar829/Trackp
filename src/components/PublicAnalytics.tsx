@@ -440,7 +440,12 @@ export const PublicAnalytics: React.FC<PublicAnalyticsProps> = ({ onBack }) => {
 
         {/* Footer Note */}
         <div className="text-center py-4 text-xs text-white/40 border-t border-white/5">
-          <p>PRIME X EARN Telegram Analytics System • Powered by Real-Time Webhook Engine • Ads managed by VYRNXY ADS</p>
+          <p>
+            PRIME X EARN Telegram Analytics System • Powered by Real-Time Webhook Engine • Ads managed by{' '}
+            <a href="https://t.me/+ec-4Jk1PY7w3Y2Vl" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:underline font-bold">
+              VYRNXY ADS
+            </a>
+          </p>
         </div>
       </div>
     </div>

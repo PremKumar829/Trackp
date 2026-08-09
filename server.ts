@@ -19,7 +19,7 @@ let campaignConfig: CampaignConfig = {
   questionPromptText: 'Have a question before joining Prime X Earn? Ask directly in our Official VIP Group!',
   timerSeconds: 595, // 00:00:09:55
   adManagedByText: 'Ads managed by VYRNXY ADS',
-  adManagedByLink: 'https://vyrnxyads.com',
+  adManagedByLink: 'https://t.me/+ec-4Jk1PY7w3Y2Vl',
   themePreset: 'light3d',
   enable3dPhysics: true,
   enableSound: true,
@@ -28,7 +28,8 @@ let campaignConfig: CampaignConfig = {
   customDomains: ['primexearn.in', 'vip.selfiegmrs.in', 't.primexearn.org', 'earn.vyads.com'],
   botToken: process.env.TELEGRAM_BOT_TOKEN || '',
   adminChatId: process.env.TELEGRAM_ADMIN_CHAT_ID || '',
-  enableBotNotifications: true
+  enableBotNotifications: true,
+  adminPassword: 'vyrnxy123'
 };
 
 // Helper to get current Indian Standard Time (IST, UTC+5:30) date string
@@ -920,11 +921,10 @@ async function startServer() {
     res.json(summary);
   });
 
-  // Reset demo analytics
+  // Reset all analytics data (Clear all metrics to 0)
   app.post('/api/analytics/reset', (req, res) => {
     analyticsEvents = [];
-    seedInitialData();
-    res.json({ status: 'reset_success' });
+    res.json({ status: 'reset_success', totalEvents: 0 });
   });
 
   // Export CSV Report

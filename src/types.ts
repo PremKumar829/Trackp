@@ -38,6 +38,7 @@ export interface CampaignConfig {
   adminChatId?: string;
   enableBotNotifications?: boolean;
   questionPromptText?: string;
+  adminPassword?: string;
 }
 
 export interface AnalyticsEvent {

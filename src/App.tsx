@@ -5,7 +5,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { PublicAnalytics } from './components/PublicAnalytics';
 import { BrowserHeader } from './components/BrowserHeader';
 import { ParticleBackground } from './components/3d/ParticleBackground';
-import { LayoutDashboard, Eye, BarChart3 } from 'lucide-react';
+import { ShieldCheck, Lock, KeyRound, Eye, EyeOff, ArrowRight } from 'lucide-react';
 
 const DEFAULT_CAMPAIGN: CampaignConfig = {
   id: 'campaign-001',
@@ -22,13 +22,14 @@ const DEFAULT_CAMPAIGN: CampaignConfig = {
   questionPromptText: 'Ask a question directly to our team in Prime X Earn VIP Telegram Group!',
   timerSeconds: 595,
   adManagedByText: 'Ads managed by VYRNXY ADS',
-  adManagedByLink: 'https://vyrnxyads.com',
+  adManagedByLink: 'https://t.me/+ec-4Jk1PY7w3Y2Vl',
   themePreset: 'light3d',
   enable3dPhysics: true,
   enableSound: true,
   verifyJoinModal: true,
   customDomainName: 'primexearn.in',
   customDomains: ['primexearn.in', 'vip.selfiegmrs.in', 't.primexearn.org', 'earn.vyads.com'],
+  adminPassword: 'vyrnxy123',
 };
 
 const DEFAULT_ANALYTICS: AnalyticsSummary = {
@@ -54,6 +55,27 @@ export default function App() {
   const [campaign, setCampaign] = useState<CampaignConfig>(DEFAULT_CAMPAIGN);
   const [analytics, setAnalytics] = useState<AnalyticsSummary>(DEFAULT_ANALYTICS);
   const [showInAppHeader, setShowInAppHeader] = useState<boolean>(true);
+
+  // Admin Auth Password State
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState<boolean>(
+    () => sessionStorage.getItem('vyrnxy_admin_authed') === 'true'
+  );
+  const [passwordInput, setPasswordInput] = useState<string>('');
+  const [passwordError, setPasswordError] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+
+  const handleAdminUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    const correctPassword = campaign.adminPassword || 'vyrnxy123';
+    if (passwordInput === correctPassword) {
+      setIsAdminUnlocked(true);
+      sessionStorage.setItem('vyrnxy_admin_authed', 'true');
+      setPasswordError('');
+      setPasswordInput('');
+    } else {
+      setPasswordError('Incorrect admin password. Please try again.');
+    }
+  };
 
   // Check URL query parameters on load
   useEffect(() => {
@@ -212,14 +234,88 @@ export default function App() {
 
       {/* Mode 2: Advertiser Admin Control Dashboard */}
       {viewMode === 'admin' && (
-        <AdminDashboard
-          campaign={campaign}
-          analytics={analytics}
-          onUpdateCampaign={handleUpdateCampaign}
-          onRefreshAnalytics={fetchAnalytics}
-          onResetAnalytics={handleResetAnalytics}
-          onViewLiveAd={() => setViewMode('ad')}
-        />
+        !isAdminUnlocked ? (
+          <div className="min-h-screen w-full bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950/40 pointer-events-none" />
+            
+            <div className="relative z-10 w-full max-w-md bg-slate-900/90 border border-slate-800 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl">
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-rose-500 to-indigo-600 p-0.5 shadow-lg shadow-rose-500/20 mb-4">
+                  <div className="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center">
+                    <Lock className="w-8 h-8 text-rose-400" />
+                  </div>
+                </div>
+                <h2 className="text-xl font-bold text-white tracking-wide">VYRNXY ADS Admin Gate</h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Enter your admin password to access control dashboard
+                </p>
+              </div>
+
+              <form onSubmit={handleAdminUnlock} className="space-y-4">
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                    Admin Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                      <KeyRound className="w-4 h-4" />
+                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={passwordInput}
+                      onChange={(e) => {
+                        setPasswordInput(e.target.value);
+                        if (passwordError) setPasswordError('');
+                      }}
+                      placeholder="Enter admin password..."
+                      className="w-full pl-10 pr-10 py-3 bg-slate-800/80 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-white cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {passwordError && (
+                    <p className="text-xs text-rose-400 font-medium mt-2 flex items-center gap-1">
+                      ⚠️ {passwordError}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 px-4 bg-gradient-to-r from-rose-500 to-indigo-600 hover:from-rose-600 hover:to-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99]"
+                >
+                  <span>Unlock Admin Dashboard</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+
+                <div className="text-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('ad')}
+                    className="text-xs text-slate-400 hover:text-white transition-colors cursor-pointer underline decoration-slate-600"
+                  >
+                    ← Return to Live Ad Page
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        ) : (
+          <AdminDashboard
+            campaign={campaign}
+            analytics={analytics}
+            onUpdateCampaign={handleUpdateCampaign}
+            onRefreshAnalytics={fetchAnalytics}
+            onResetAnalytics={handleResetAnalytics}
+            onViewLiveAd={() => setViewMode('ad')}
+          />
+        )
       )}
 
       {/* Mode 3: Public Analytics Page */}

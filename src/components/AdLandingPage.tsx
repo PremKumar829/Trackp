@@ -300,12 +300,12 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
             <div className="mt-7 text-xs font-semibold text-slate-700 dark:text-slate-300">
               Ads managed by{' '}
               <a
-                href={campaign.adManagedByLink || '#'}
+                href={campaign.adManagedByLink || 'https://t.me/+ec-4Jk1PY7w3Y2Vl'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-rose-500 hover:text-rose-600 font-bold transition-colors underline decoration-rose-300"
               >
-                {campaign.adManagedByText.replace(/^Ads managed by\s*/i, '') || 'AdsEmpireAdvertising'}
+                {campaign.adManagedByText.replace(/^Ads managed by\s*/i, '') || 'VYRNXY ADS'}
               </a>
             </div>
 
