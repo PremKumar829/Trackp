@@ -4,9 +4,10 @@ import {
 } from 'recharts';
 import {
   LogOut, Eye, Globe, Check, Copy, RefreshCw, ChevronDown, Calendar,
-  ArrowRight, ShieldCheck, Zap, ExternalLink, Filter, Sparkles
+  ArrowRight, ShieldCheck, Zap, ExternalLink, Filter, Sparkles, MapPin
 } from 'lucide-react';
 import { AnalyticsSummary, TimeframeFilter } from '../types';
+import { GeoLocationModal } from './GeoLocationModal';
 
 interface PublicAnalyticsProps {
   onBack?: () => void;
@@ -30,6 +31,17 @@ export const PublicAnalytics: React.FC<PublicAnalyticsProps> = ({
   const [showCustomDateModal, setShowCustomDateModal] = useState<boolean>(false);
   const [customStartDate, setCustomStartDate] = useState<string>('2026-08-01');
   const [customEndDate, setCustomEndDate] = useState<string>('2026-08-15');
+
+  // Geo Location Modal State
+  const [showGeoModal, setShowGeoModal] = useState<boolean>(false);
+  const [selectedGeoPerformer, setSelectedGeoPerformer] = useState<{
+    username: string;
+    label: string;
+    group: string;
+    visits: number;
+    clicks: number;
+    joins: number;
+  } | null>(null);
 
   // Update live IST time every second
   useEffect(() => {
@@ -396,13 +408,25 @@ export const PublicAnalytics: React.FC<PublicAnalyticsProps> = ({
 
         {/* Group Performance Section */}
         <div className="space-y-2.5">
-          <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
-            <span>🗂️</span>
-            <span>Group Performance</span>
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
+              <span>🗂️</span>
+              <span>Team & Department Performance</span>
+            </h3>
+            <button
+              onClick={() => {
+                setSelectedGeoPerformer(null);
+                setShowGeoModal(true);
+              }}
+              className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1 bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-xl cursor-pointer transition-colors"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>Global Geo View</span>
+            </button>
+          </div>
 
           <div className="space-y-2">
-            {(data?.groupBreakdown || [{ group: 'Win03', visits: 1363, clicks: 1488, joins: 812, cvr: 54.6 }]).map((grp) => (
+            {(data?.groupBreakdown || [{ group: 'VIP Reception Team', visits: 1363, clicks: 1488, joins: 812, cvr: 54.6 }]).map((grp) => (
               <div
                 key={grp.group}
                 className="flex items-center justify-between p-4 rounded-2xl bg-[#101426]/90 border border-white/10 shadow-lg"
@@ -434,10 +458,10 @@ export const PublicAnalytics: React.FC<PublicAnalyticsProps> = ({
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
               <span>🏆</span>
-              <span>Top Performers</span>
+              <span>Top Performers & Receptionists</span>
             </h3>
             <span className="text-xs text-white/40 font-mono">
-              {performers.length} active assistants
+              {performers.length} active links
             </span>
           </div>
 
@@ -457,7 +481,7 @@ export const PublicAnalytics: React.FC<PublicAnalyticsProps> = ({
                       </span>
                     </div>
                     <div className="text-xs text-white/50 font-mono mt-0.5 truncate">
-                      {performer.group} • {performer.visits} visits • {performer.clicks} clicks
+                      {performer.group || 'Direct Gateway'} • {performer.visits} visits • {performer.clicks} clicks
                     </div>
                   </div>
 
@@ -471,7 +495,7 @@ export const PublicAnalytics: React.FC<PublicAnalyticsProps> = ({
                       </div>
                     </div>
 
-                    {/* Action buttons matching screenshot (Eye + Globe) */}
+                    {/* Action buttons (Eye + Globe for Geo Location + Copy) */}
                     <div className="flex items-center gap-1.5 pl-2 border-l border-white/10">
                       {/* Eye Button: Preview Landing Page */}
                       <button
@@ -482,7 +506,20 @@ export const PublicAnalytics: React.FC<PublicAnalyticsProps> = ({
                         <Eye className="w-4 h-4" />
                       </button>
 
-                      {/* Globe Button: Copy Link */}
+                      {/* Globe Button: Open Real-time Geo Location Modal */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedGeoPerformer(performer);
+                          setShowGeoModal(true);
+                        }}
+                        className="p-2 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 hover:border-sky-500/40 transition-all cursor-pointer"
+                        title={`View Real-Time Geo-Location for ${performer.username}`}
+                      >
+                        <Globe className="w-4 h-4 text-sky-400" />
+                      </button>
+
+                      {/* Copy Link Button */}
                       <button
                         onClick={(e) => handleCopyLink(performer.label, e)}
                         className={`p-2 rounded-xl transition-all cursor-pointer ${
@@ -492,7 +529,7 @@ export const PublicAnalytics: React.FC<PublicAnalyticsProps> = ({
                         }`}
                         title={`Copy URL (domain/${performer.label})`}
                       >
-                        {isCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Globe className="w-4 h-4" />}
+                        {isCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
@@ -502,6 +539,14 @@ export const PublicAnalytics: React.FC<PublicAnalyticsProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Real-time Geo-Location Modal */}
+      <GeoLocationModal
+        isOpen={showGeoModal}
+        onClose={() => setShowGeoModal(false)}
+        analytics={data}
+        targetAssistant={selectedGeoPerformer}
+      />
 
       {/* Custom Date Range Modal */}
       {showCustomDateModal && (

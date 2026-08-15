@@ -371,13 +371,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('links')}
-            className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
+            className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'links'
-                ? 'bg-white/10 text-white shadow-md'
-                : 'text-white/50 hover:text-white'
+                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/30'
+                : 'text-emerald-400/80 hover:text-emerald-300'
             }`}
           >
-            Tracking Links
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Landing Pages &amp; Links</span>
+            <span className="bg-emerald-500/30 text-emerald-200 text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold">
+              {(campaign?.links || []).length}
+            </span>
           </button>
           <button
             onClick={() => setActiveTab('feed')}
@@ -387,7 +391,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 : 'text-white/50 hover:text-white'
             }`}
           >
-            Live Stream ({analytics.recentEvents.length})
+            Live Stream ({(analytics?.recentEvents || []).length})
           </button>
           <button
             onClick={() => setActiveTab('bot')}
@@ -461,7 +465,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {/* Card 1: Total Page Visits */}
               <div className="bg-gradient-to-b from-white/10 to-transparent border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden group">
                 <p className="text-white/50 text-xs font-medium uppercase tracking-wider mb-1">Page Visits</p>
-                <h2 className="text-4xl font-bold tracking-tighter text-white mb-2">{analytics.totalVisits.toLocaleString()}</h2>
+                <h2 className="text-4xl font-bold tracking-tighter text-white mb-2">{(analytics?.totalVisits ?? 0).toLocaleString()}</h2>
                 <div className="mt-4 flex items-center gap-2">
                   <span className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-md text-xs font-bold">+100%</span>
                   <span className="text-white/30 text-xs">live impressions</span>
@@ -471,9 +475,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {/* Card 2: Telegram Link Clicks */}
               <div className="bg-gradient-to-b from-white/10 to-transparent border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden group">
                 <p className="text-white/50 text-xs font-medium uppercase tracking-wider mb-1">Total Link Clicks</p>
-                <h2 className="text-4xl font-bold tracking-tighter text-white mb-2">{analytics.totalClicks.toLocaleString()}</h2>
+                <h2 className="text-4xl font-bold tracking-tighter text-white mb-2">{(analytics?.totalClicks ?? 0).toLocaleString()}</h2>
                 <div className="mt-4 flex items-center gap-2">
-                  <span className="bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded-md text-xs font-bold">{analytics.clickThroughRate}% CTR</span>
+                  <span className="bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded-md text-xs font-bold">{analytics?.clickThroughRate ?? 0}% CTR</span>
                   <span className="text-white/30 text-xs">click conversion</span>
                 </div>
               </div>
@@ -481,9 +485,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {/* Card 3: Telegram Joins */}
               <div className="bg-gradient-to-b from-blue-500/10 to-transparent border border-blue-500/20 rounded-3xl p-6 shadow-2xl relative overflow-hidden group">
                 <p className="text-blue-400 text-xs font-medium uppercase tracking-wider mb-1">Telegram Joins</p>
-                <h2 className="text-4xl font-bold tracking-tighter text-blue-100 mb-2">{analytics.totalJoins.toLocaleString()}</h2>
+                <h2 className="text-4xl font-bold tracking-tighter text-blue-100 mb-2">{(analytics?.totalJoins ?? 0).toLocaleString()}</h2>
                 <div className="mt-4 flex items-center gap-2">
-                  <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md text-xs font-bold">{analytics.joinConversionRate}%</span>
+                  <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md text-xs font-bold">{analytics?.joinConversionRate ?? 0}%</span>
                   <span className="text-white/30 text-xs">conversion rate</span>
                 </div>
               </div>
@@ -491,7 +495,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {/* Card 4: Overall Funnel % */}
               <div className="bg-gradient-to-b from-white/10 to-transparent border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden group">
                 <p className="text-white/50 text-xs font-medium uppercase tracking-wider mb-1">Overall Conversion %</p>
-                <h2 className="text-4xl font-bold tracking-tighter text-rose-300 mb-2">{analytics.overallConversionRate}%</h2>
+                <h2 className="text-4xl font-bold tracking-tighter text-rose-300 mb-2">{analytics?.overallConversionRate ?? 0}%</h2>
                 <div className="mt-4 flex items-center gap-2">
                   <span className="bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded-md text-xs font-bold">End-to-End</span>
                   <span className="text-white/30 text-xs">visits ➔ joined</span>
@@ -512,7 +516,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div>
                   <div className="flex justify-between text-xs font-semibold mb-2">
                     <span className="text-white/70">1. Total Ad Page Visits</span>
-                    <span className="text-white font-mono">{analytics.totalVisits} (100%)</span>
+                    <span className="text-white font-mono">{analytics?.totalVisits ?? 0} (100%)</span>
                   </div>
                   <div className="w-full bg-white/5 h-3.5 rounded-full overflow-hidden p-0.5 border border-white/10">
                     <div className="bg-blue-500 h-full rounded-full transition-all duration-500" style={{ width: '100%' }} />
@@ -523,10 +527,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div>
                   <div className="flex justify-between text-xs font-semibold mb-2">
                     <span className="text-white/70">2. Clicked Telegram Channel Link</span>
-                    <span className="text-sky-400 font-mono">{analytics.totalClicks} ({analytics.clickThroughRate}%)</span>
+                    <span className="text-sky-400 font-mono">{analytics?.totalClicks ?? 0} ({analytics?.clickThroughRate ?? 0}%)</span>
                   </div>
                   <div className="w-full bg-white/5 h-3.5 rounded-full overflow-hidden p-0.5 border border-white/10">
-                    <div className="bg-sky-400 h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(analytics.clickThroughRate, 100)}%` }} />
+                    <div className="bg-sky-400 h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(analytics?.clickThroughRate ?? 0, 100)}%` }} />
                   </div>
                 </div>
 
@@ -534,10 +538,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div>
                   <div className="flex justify-between text-xs font-semibold mb-2">
                     <span className="text-white/70">3. Confirmed Telegram Channel Joined</span>
-                    <span className="text-emerald-400 font-mono">{analytics.totalJoins} ({analytics.overallConversionRate}% of Visits)</span>
+                    <span className="text-emerald-400 font-mono">{analytics?.totalJoins ?? 0} ({analytics?.overallConversionRate ?? 0}% of Visits)</span>
                   </div>
                   <div className="w-full bg-white/5 h-3.5 rounded-full overflow-hidden p-0.5 border border-white/10">
-                    <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(analytics.overallConversionRate, 100)}%` }} />
+                    <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(analytics?.overallConversionRate ?? 0, 100)}%` }} />
                   </div>
                 </div>
               </div>
@@ -559,11 +563,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={analytics.hourlyChart}>
+                  <AreaChart data={analytics?.hourlyChart || []}>
                     <defs>
                       <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.5}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.5}/>
                       </linearGradient>
                       <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.5}/>
@@ -596,7 +600,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </h3>
 
                 <div className="space-y-3">
-                  {analytics.sourceBreakdown.map((src, i) => (
+                  {(analytics?.sourceBreakdown || []).map((src, i) => (
                     <div key={i} className="flex items-center justify-between text-xs p-3 rounded-2xl bg-white/5 border border-white/10">
                       <div className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
@@ -615,13 +619,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 shadow-2xl">
                 <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
                   <Smartphone className="w-4 h-4 text-emerald-400" />
-                  <span>Device & Browser Distribution</span>
+                  <span>Device &amp; Browser Distribution</span>
                 </h3>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Devices</span>
-                    {analytics.deviceBreakdown.map((d, i) => (
+                    {(analytics?.deviceBreakdown || []).map((d, i) => (
                       <div key={i} className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs">
                         <span className="text-slate-300">{d.device}</span>
                         <span className="font-bold text-emerald-400 font-mono">{d.count}</span>
@@ -631,7 +635,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                   <div className="space-y-2">
                     <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Browsers</span>
-                    {analytics.browserBreakdown.map((b, i) => (
+                    {(analytics?.browserBreakdown || []).map((b, i) => (
                       <div key={i} className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs truncate">
                         <span className="text-slate-300 truncate">{b.browser}</span>
                         <span className="font-bold text-sky-400 ml-1 font-mono">{b.count}</span>
@@ -673,7 +677,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <span className="font-bold text-sky-400 font-mono">?link={dest.label}</span>
                             <span className="text-blue-300 font-bold flex items-center gap-0.5">
                               <AtSign className="w-3 h-3" />
-                              <span>{dest.telegramUsername.replace('@', '')}</span>
+                              <span>{(dest.username || dest.label).replace('@', '')}</span>
                             </span>
                           </div>
                           <span className="text-[10px] text-white/40 mt-0.5 font-mono">
@@ -718,7 +722,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                         <div className="flex items-center gap-3 font-mono">
                           <span className="text-white/40 text-[11px]">{loc.count} visits</span>
-                          <span className="font-bold text-emerald-400">{loc.percentage}%</span>
+                          <span className="font-bold text-emerald-400">
+                            {(((loc.count / Math.max(analytics.totalVisits || 1, 1)) * 100).toFixed(0))}%
+                          </span>
                         </div>
                       </div>
                     ))
@@ -1437,11 +1443,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </h2>
                 <p className="text-xs text-white/40">Real-time stream of member page visits, clicks, and channel joins</p>
               </div>
-              <span className="text-xs text-emerald-400 font-mono font-semibold">Total Events Logged: {analytics.recentEvents.length}</span>
+              <span className="text-xs text-emerald-400 font-mono font-semibold">Total Events Logged: {(analytics?.recentEvents || []).length}</span>
             </div>
 
             <div className="space-y-3">
-              {analytics.recentEvents.slice(0, 15).map((evt) => (
+              {(analytics?.recentEvents || []).slice(0, 15).map((evt) => (
                 <div key={evt.id} className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-colors">
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-xs ${
                     evt.type === 'join' ? 'bg-gradient-to-tr from-emerald-500 to-teal-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]' :

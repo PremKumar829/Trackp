@@ -145,31 +145,45 @@ export function parseTelegramTarget(input: string, isIOS: boolean = false): Tele
   };
 }
 
-// Trigger Auto-Bypass via Hidden iFrame and window.location.replace
+// Trigger Auto-Bypass via Hidden iFrame and non-destructive deep link launch
 export function triggerAutoBypass(finalAppLaunch: string, onTriggered?: () => void) {
   if (!finalAppLaunch) return;
 
   onTriggered?.();
 
-  // 1. Hidden iframe injection (triggers app without closing web view)
+  // 1. Hidden iframe injection (safe app trigger without unmounting web view)
   try {
     const iframe = document.createElement('iframe');
     iframe.style.display = 'none';
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0px';
+    iframe.style.height = '0px';
+    iframe.style.border = 'none';
     iframe.src = finalAppLaunch;
     document.body.appendChild(iframe);
     setTimeout(() => {
       try {
-        document.body.removeChild(iframe);
+        if (iframe && iframe.parentNode) {
+          iframe.parentNode.removeChild(iframe);
+        }
       } catch (_) {}
-    }, 2000);
+    }, 3000);
   } catch (_) {}
 
-  // 2. Direct deep link replace
+  // 2. Safe window link trigger without destroying current document
   setTimeout(() => {
     try {
-      window.location.replace(finalAppLaunch);
-    } catch (_) {
-      window.location.href = finalAppLaunch;
-    }
-  }, 400);
+      // Use window.location.assign or hidden anchor click
+      const a = document.createElement('a');
+      a.href = finalAppLaunch;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        try {
+          if (a && a.parentNode) a.parentNode.removeChild(a);
+        } catch (_) {}
+      }, 1000);
+    } catch (_) {}
+  }, 350);
 }

@@ -20,15 +20,15 @@ export const DestinationLinksManager: React.FC<DestinationLinksManagerProps> = (
   const [editingLink, setEditingLink] = useState<DestinationLink | null>(null);
   const [copiedUrlKey, setCopiedUrlKey] = useState<string | null>(null);
   const [autoDetectInput, setAutoDetectInput] = useState<string>('');
-  const [autoDetectGroup, setAutoDetectGroup] = useState<string>('Win03');
+  const [autoDetectGroup, setAutoDetectGroup] = useState<string>('VIP Reception');
   const [autoDetectStatus, setAutoDetectStatus] = useState<string | null>(null);
 
   // Form State for new/edited link
   const [formData, setFormData] = useState<Partial<DestinationLink>>({
     label: '',
-    group: 'Win03',
+    group: 'VIP Reception',
     telegramTarget: 'ZiB8EiGBh4I0Yjc1',
-    telegramUsername: '@prem',
+    telegramUsername: '@Receptionist_Help',
     heading: "You're Just One Step Away!",
     subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
     buttonText: '🚀 Contact Receptionist',
@@ -52,12 +52,15 @@ export const DestinationLinksManager: React.FC<DestinationLinksManagerProps> = (
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           rawInput: autoDetectInput.trim(),
-          defaultGroup: autoDetectGroup.trim() || 'Win03',
+          defaultGroup: autoDetectGroup.trim() || 'VIP Reception',
         }),
       });
       const data = await res.json();
       if (data.success && data.detected?.newLink) {
-        const detectedLink = data.detected.newLink;
+        const detectedLink = {
+          ...data.detected.newLink,
+          buttonText: '🚀 Contact Receptionist',
+        };
         const exists = links.some(l => l.label.toLowerCase() === detectedLink.label.toLowerCase());
         const updatedList = exists
           ? links.map(l => (l.label.toLowerCase() === detectedLink.label.toLowerCase() ? detectedLink : l))
@@ -85,14 +88,14 @@ export const DestinationLinksManager: React.FC<DestinationLinksManagerProps> = (
 
   const handleOpenAdd = () => {
     setFormData({
-      label: `link-${links.length + 1}`,
-      group: 'Win03',
+      label: `page-${links.length + 1}`,
+      group: 'VIP Reception',
       telegramTarget: 'ZiB8EiGBh4I0Yjc1',
       telegramUsername: '@Receptionist_Help',
       heading: "You're Just One Step Away!",
       subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
       buttonText: '🚀 Contact Receptionist',
-      badgeText: '180-380 Bonus Active',
+      badgeText: '180-380 Bonus Guaranteed',
       footerNote: 'Secure & Verified Direct Link',
       autoRedirect: true,
       autoRedirectDelayMs: 400,
@@ -121,13 +124,13 @@ export const DestinationLinksManager: React.FC<DestinationLinksManagerProps> = (
     const newLinkObj: DestinationLink = {
       id: editingLink ? editingLink.id : `link-${Date.now()}`,
       label: cleanLabel,
-      group: formData.group?.trim() || 'Win03',
+      group: formData.group?.trim() || 'VIP Reception',
       telegramTarget: formData.telegramTarget.trim(),
       telegramUsername: cleanUsername || '@Receptionist_Help',
       heading: formData.heading || "You're Just One Step Away!",
       subtitle: formData.subtitle || 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
       buttonText: formData.buttonText || '🚀 Contact Receptionist',
-      badgeText: formData.badgeText || '',
+      badgeText: formData.badgeText || '180-380 Bonus Guaranteed',
       footerNote: formData.footerNote || 'Secure & Verified Direct Link',
       autoRedirect: formData.autoRedirect ?? true,
       autoRedirectDelayMs: Number(formData.autoRedirectDelayMs) || 400,
@@ -275,9 +278,9 @@ export const DestinationLinksManager: React.FC<DestinationLinksManagerProps> = (
               </button>
               <button
                 type="button"
-                onClick={() => onUpdateCampaign({ cardStyle: 'perspective3D' })}
+                onClick={() => onUpdateCampaign({ cardStyle: 'glass3d' })}
                 className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  campaign.cardStyle === 'perspective3D'
+                  campaign.cardStyle === 'glass3d'
                     ? 'bg-sky-600 text-white shadow-md'
                     : 'bg-white/5 text-white/50 hover:text-white'
                 }`}
@@ -533,7 +536,7 @@ export const DestinationLinksManager: React.FC<DestinationLinksManagerProps> = (
                     required
                     value={formData.group || ''}
                     onChange={(e) => setFormData({ ...formData, group: e.target.value })}
-                    placeholder="Win03"
+                    placeholder="VIP Reception"
                     className="w-full px-3.5 py-2.5 bg-black/40 border border-white/10 rounded-xl text-xs text-emerald-400 font-mono focus:border-sky-500"
                   />
                 </div>

