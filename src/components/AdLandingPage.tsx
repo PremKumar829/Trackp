@@ -2,17 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { Send, Sparkles, ShieldCheck, CheckCircle2, ArrowRight, Volume2, VolumeX, Flame, Zap, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
-import { CampaignConfig } from '../types';
+import { CampaignConfig, DestinationLink } from '../types';
 import { PerspectiveCard } from './3d/PerspectiveCard';
+import { ProfessionalJoinCard } from './ProfessionalJoinCard';
+import { GeoData } from '../utils/geo';
+import { parseTelegramTarget, triggerAutoBypass } from '../utils/telegram';
 
 interface AdLandingPageProps {
   campaign: CampaignConfig;
-  onTrackClick: (buttonId: string) => void;
+  activeLink: DestinationLink;
+  geo: GeoData | null;
+  onTrackClick: (buttonId: string, isAutoBypass?: boolean) => void;
   onTrackJoin: () => void;
 }
 
 export const AdLandingPage: React.FC<AdLandingPageProps> = ({
   campaign,
+  activeLink,
+  geo,
   onTrackClick,
   onTrackJoin,
 }) => {
@@ -35,6 +42,9 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
   const [questionInput, setQuestionInput] = useState('');
   const [questionSubmitted, setQuestionSubmitted] = useState(false);
 
+  const isIOS = geo?.isIOS || (/iPad|iPhone|iPod/.test(typeof navigator !== 'undefined' ? navigator.userAgent : ''));
+  const tgInfo = parseTelegramTarget(activeLink.telegramTarget || campaign.telegramLink || 'ZiB8EiGBh4I0Yjc1', isIOS);
+
   // Sound generator helper
   const playClickSound = () => {
     if (!soundEnabled) return;
@@ -43,8 +53,8 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5 note
-      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1); // A5
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
       gain.gain.setValueAtTime(0.15, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
       osc.connect(gain);
@@ -52,18 +62,17 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
       osc.start();
       osc.stop(ctx.currentTime + 0.12);
     } catch (err) {
-      // AudioContext not allowed before user gesture
+      // AudioContext not allowed before gesture
     }
   };
 
   // Live countdown timer logic
   useEffect(() => {
-    // Convert timerSeconds to days, hours, minutes, seconds
     let totalSec = campaign.timerSeconds || 595;
 
     const interval = setInterval(() => {
       if (totalSec <= 0) {
-        totalSec = campaign.timerSeconds || 595; // reset or loop timer for urgency
+        totalSec = campaign.timerSeconds || 595;
       } else {
         totalSec--;
       }
@@ -82,23 +91,23 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
   // Handle Telegram Channel Join Click
   const handleTelegramClick = (buttonId: string) => {
     playClickSound();
-    onTrackClick(buttonId);
+    onTrackClick(buttonId, false);
 
-    // Open Telegram channel link in new tab
-    if (campaign.telegramLink) {
+    if (tgInfo.finalAppLaunch) {
+      window.location.href = tgInfo.finalAppLaunch;
+    } else if (campaign.telegramLink) {
       window.open(campaign.telegramLink, '_blank', 'noopener,noreferrer');
     }
 
-    // Show verification modal to track joined members
     if (campaign.verifyJoinModal) {
       setShowVerifyModal(true);
     }
   };
 
-  // Handle Telegram Group Click / Open
+  // Handle Telegram Group Click
   const handleGroupClick = () => {
     playClickSound();
-    onTrackClick('vip_group_button');
+    onTrackClick('vip_group_button', false);
     const groupLink = campaign.telegramGroupLink || campaign.telegramLink;
     if (groupLink) {
       window.open(groupLink, '_blank', 'noopener,noreferrer');
@@ -118,18 +127,24 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
         body: JSON.stringify({
           questionText: questionInput,
           referrer: window.location.href,
-          device: /Mobile|Android|iP(hone|od)/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
-          browser: navigator.userAgent
+          device: geo?.device || 'Mobile',
+          browser: geo?.browser || navigator.userAgent,
+          city: geo?.city,
+          region: geo?.region,
+          country: geo?.country,
+          countryFlag: geo?.countryFlag,
+          isp: geo?.isp,
+          linkLabel: activeLink.label,
+          telegramUsername: activeLink.telegramUsername,
         })
       });
     } catch (err) {
-      // Ignore network errors gracefully
+      // Ignore network errors
     }
 
     setQuestionSubmitted(true);
     const groupLink = campaign.telegramGroupLink || campaign.telegramLink;
     
-    // Auto redirect to Telegram Group with question after 1.5s
     setTimeout(() => {
       if (groupLink) {
         window.open(groupLink, '_blank', 'noopener,noreferrer');
@@ -157,7 +172,22 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
     }, 2500);
   };
 
-  // Theme-specific background
+  // If cardStyle is 'professionalClean' (or requested post layout), render ProfessionalJoinCard directly!
+  if (campaign.cardStyle === 'professionalClean' || !campaign.cardStyle) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-slate-900 text-slate-100 relative">
+        <ProfessionalJoinCard
+          campaign={campaign}
+          activeLink={activeLink}
+          geo={geo}
+          onTrackClick={onTrackClick}
+          onTrackJoin={onTrackJoin}
+        />
+      </div>
+    );
+  }
+
+  // 3D Theme-specific background
   const getPageBg = () => {
     switch (campaign.themePreset) {
       case 'dark3d':
@@ -182,7 +212,7 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
       {/* Sound toggle float */}
       <button
         onClick={() => setSoundEnabled(!soundEnabled)}
-        className="fixed top-16 right-4 z-40 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-2.5 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:scale-110 transition-transform"
+        className="fixed top-16 right-4 z-40 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-2.5 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:scale-110 transition-transform cursor-pointer"
         title={soundEnabled ? 'Mute Sounds' : 'Enable Interactive Sound'}
       >
         {soundEnabled ? <Volume2 className="w-5 h-5 text-blue-600 dark:text-blue-400" /> : <VolumeX className="w-5 h-5 text-slate-400" />}
@@ -200,10 +230,10 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold tracking-wide mb-4 border border-rose-500/20"
             >
               <Flame className="w-3.5 h-3.5 text-rose-500 animate-pulse" />
-              <span>FREE VIP ACCESS TODAY</span>
+              <span>{activeLink.badgeText || 'FREE VIP ACCESS TODAY'}</span>
             </motion.div>
 
-            {/* Profile Avatar Image with Red Border (Matches Screenshot) */}
+            {/* Profile Avatar Image */}
             <div className="relative mb-5 group">
               <div
                 className="w-36 h-36 sm:w-40 sm:h-40 rounded-full p-1 transition-all duration-300 shadow-xl"
@@ -214,7 +244,7 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
               >
                 <img
                   src={campaign.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600'}
-                  alt={campaign.title}
+                  alt={activeLink.heading || campaign.title}
                   className="w-full h-full object-cover rounded-full bg-slate-200 border-2 border-white dark:border-slate-900 group-hover:scale-105 transition-transform duration-300"
                 />
               </div>
@@ -225,19 +255,17 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
               </div>
             </div>
 
-            {/* Title !! SELFIE !! */}
+            {/* Title */}
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-2 uppercase drop-shadow-sm font-sans">
-              {campaign.title || '!! SELFIE !!'}
+              {activeLink.heading || campaign.title}
             </h1>
 
-            {/* Optional Subtitle */}
-            {campaign.subtitle && (
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-xs font-medium mb-5 leading-relaxed">
-                {campaign.subtitle}
-              </p>
-            )}
+            {/* Subtitle */}
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-xs font-medium mb-5 leading-relaxed">
+              {activeLink.subtitle || campaign.subtitle}
+            </p>
 
-            {/* CTA Button 1 (Top Blue Button with Telegram Paper Plane) */}
+            {/* CTA Button 1 */}
             <motion.button
               whileHover={{ scale: 1.03, translateY: -2 }}
               whileTap={{ scale: 0.97 }}
@@ -246,10 +274,10 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               <Send className="w-5 h-5 fill-white rotate-[-20deg] group-hover:translate-x-1 group-hover:-translate-y-0.5 transition-transform" />
-              <span>{campaign.ctaText1 || '✈ Join Free Telegram'}</span>
+              <span>{activeLink.buttonText || campaign.ctaText1 || '🚀 Contact Receptionist'}</span>
             </motion.button>
 
-            {/* Countdown Timer Block (00 : 00 : 09 : 55) */}
+            {/* Countdown Timer Block */}
             <div className="w-full my-1 py-3 px-2 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60">
               <div className="flex items-center justify-center gap-2 sm:gap-3 text-red-500 font-extrabold text-2xl sm:text-3xl tracking-wider font-mono">
                 <span>{String(timeLeft.days).padStart(2, '0')}</span>
@@ -261,7 +289,6 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
                 <span className="text-red-600 animate-pulse">{String(timeLeft.seconds).padStart(2, '0')}</span>
               </div>
 
-              {/* Countdown Labels (DAYS, HOURS, MINUTES, SECONDS in magenta/pink) */}
               <div className="grid grid-cols-4 text-center mt-1 text-[10px] sm:text-[11px] font-bold text-pink-500 dark:text-pink-400 tracking-wider">
                 <span>DAYS</span>
                 <span>HOURS</span>
@@ -270,7 +297,7 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
               </div>
             </div>
 
-            {/* CTA Button 2 (Bottom Blue Button with Telegram Paper Plane) */}
+            {/* CTA Button 2 */}
             <motion.button
               whileHover={{ scale: 1.03, translateY: -2 }}
               whileTap={{ scale: 0.97 }}
@@ -279,24 +306,10 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               <Send className="w-5 h-5 fill-white rotate-[-20deg] group-hover:translate-x-1 group-hover:-translate-y-0.5 transition-transform" />
-              <span>{campaign.ctaText2 || '✈ Join Free Telegram'}</span>
+              <span>{activeLink.buttonText || campaign.ctaText2 || '🚀 Contact Receptionist'}</span>
             </motion.button>
 
-            {/* Ask Question in VIP Group Button */}
-            <div className="w-full mt-3 flex flex-col gap-2">
-              <button
-                onClick={() => {
-                  playClickSound();
-                  setShowQuestionModal(true);
-                }}
-                className="w-full py-2.5 px-4 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
-              >
-                <span>💬</span>
-                <span>{campaign.groupCtaText || 'Have a Question? Ask in VIP Group'}</span>
-              </button>
-            </div>
-
-            {/* Footer Text "Ads managed by VYRNXY ADS" */}
+            {/* Footer Text */}
             <div className="mt-7 text-xs font-semibold text-slate-700 dark:text-slate-300">
               Ads managed by{' '}
               <a
@@ -312,155 +325,6 @@ export const AdLandingPage: React.FC<AdLandingPageProps> = ({
           </div>
         </PerspectiveCard>
       </div>
-
-      {/* Ask Question in VIP Group Modal */}
-      <AnimatePresence>
-        {showQuestionModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white p-6 sm:p-7 rounded-3xl max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800 text-center relative"
-            >
-              <button
-                onClick={() => setShowQuestionModal(false)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold cursor-pointer"
-              >
-                ✕
-              </button>
-
-              <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 ring-8 ring-emerald-50 dark:ring-emerald-950">
-                <span className="text-2xl">💬</span>
-              </div>
-
-              {!questionSubmitted ? (
-                <form onSubmit={handleSubmitQuestion} className="text-left">
-                  <h3 className="text-lg font-extrabold text-center mb-1">Ask in Official VIP Group</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 text-center mb-4">
-                    {campaign.questionPromptText || 'Type your question below and connect directly with our support team in Telegram VIP Group!'}
-                  </p>
-
-                  <div className="mb-4">
-                    <textarea
-                      required
-                      rows={3}
-                      value={questionInput}
-                      onChange={(e) => setQuestionInput(e.target.value)}
-                      placeholder="e.g. Is this Telegram channel 100% free for daily signals & updates?"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs focus:outline-hidden focus:border-emerald-500 text-slate-900 dark:text-white"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-2xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer text-sm"
-                  >
-                    <Send className="w-4 h-4 fill-white" />
-                    <span>Send Question & Open VIP Group</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleGroupClick}
-                    className="w-full mt-2 py-2 text-center text-xs text-slate-500 dark:text-slate-400 hover:underline cursor-pointer"
-                  >
-                    Skip and join VIP Group directly ➔
-                  </button>
-                </form>
-              ) : (
-                <div className="py-4">
-                  <div className="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
-                    <Check className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mb-1">
-                    Question Submitted!
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Redirecting you to Prime X Earn VIP Group now...
-                  </p>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Confirm Telegram Join Verification Modal */}
-      <AnimatePresence>
-        {showVerifyModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white p-6 sm:p-8 rounded-3xl max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800 text-center relative"
-            >
-              <button
-                onClick={() => setShowVerifyModal(false)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold"
-              >
-                ✕
-              </button>
-
-              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4 ring-8 ring-blue-50 dark:ring-blue-950">
-                <Send className="w-8 h-8 fill-current" />
-              </div>
-
-              {!hasConfirmedJoin ? (
-                <>
-                  <h3 className="text-xl font-extrabold mb-2">Did you Join the Telegram Channel?</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-                    Confirm your membership to record your spot and claim VIP access privileges!
-                  </p>
-
-                  <div className="flex flex-col gap-3">
-                    <button
-                      onClick={handleConfirmJoin}
-                      className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-2xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
-                    >
-                      <CheckCircle2 className="w-5 h-5" />
-                      <span>Yes, I Joined Channel!</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        playClickSound();
-                        if (campaign.telegramLink) window.open(campaign.telegramLink, '_blank');
-                      }}
-                      className="w-full py-2.5 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-2xl text-sm transition-colors cursor-pointer"
-                    >
-                      🔄 Re-open Telegram Link
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="py-4">
-                  <div className="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
-                    <Check className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">
-                    Member Join Confirmed!
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Your Telegram join event has been successfully logged in the advertising analytics tracker.
-                  </p>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
     </div>
   );

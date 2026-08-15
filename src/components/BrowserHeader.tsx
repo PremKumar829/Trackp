@@ -32,7 +32,7 @@ export const BrowserHeader: React.FC<BrowserHeaderProps> = ({
       <div className="flex flex-col items-center justify-center flex-1 mx-2">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800">
           <Lock className="w-3.5 h-3.5 text-emerald-600 inline" />
-          <span>{domainName || 'selfiegmrs.in'}</span>
+          <span>{domainName || (typeof window !== 'undefined' ? window.location.host : 'gateway.me')}</span>
         </div>
         <div className="text-[10px] text-slate-500 font-medium">
           {sourceApp}

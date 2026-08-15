@@ -9,6 +9,8 @@ import {
   Terminal, Zap, Lock, EyeOff, MessageCircle, BellRing, Trash2
 } from 'lucide-react';
 import { CampaignConfig, AnalyticsSummary, AvatarPreset, ThemePreset } from '../types';
+import { DestinationLinksManager } from './DestinationLinksManager';
+import { MapPin, AtSign, Compass } from 'lucide-react';
 
 interface AdminDashboardProps {
   campaign: CampaignConfig;
@@ -92,12 +94,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [webhookLoading, setWebhookLoading] = useState(false);
   const [webhookResult, setWebhookResult] = useState<{ success: boolean; message: string } | null>(null);
   
-  // Simulated Telegram Chat Terminal
-  const [simulatedCommand, setSimulatedCommand] = useState('/stats');
-  const [chatHistory, setChatHistory] = useState<Array<{ sender: 'user' | 'bot'; text: string; time: string }>>([
+  // Simulated Telegram Chat Terminal with Role Switcher
+  const [simulatorRole, setSimulatorRole] = useState<'admin' | 'subadmin' | 'unauthorized'>('admin');
+  const [subadminChatIdInput, setSubadminChatIdInput] = useState<string>('');
+  const [simulatedCommand, setSimulatedCommand] = useState('/today');
+  const [chatHistory, setChatHistory] = useState<Array<{ sender: 'user' | 'bot'; text: string; time: string; ignored?: boolean }>>([
     {
       sender: 'bot',
-      text: '🤖 <b>TELEGRAM AD TRACKER BOT READY</b>\n\nI am connected to your ad platform. Send <b>/stats</b> to check live performance or <b>/recent</b> to view new channel members!',
+      text: '🤖 <b>TELEGRAM AD TRACKER BOT ONLINE</b>\n\n🛡 <b>Security & Permissions:</b>\n• <b>Admin:</b> Full link management, auto-detection, speed adjustments & tracking\n• <b>Subadmin:</b> Tracking & Analytics view only (<code>/today</code>, <code>/top</code>, <code>/stats</code>, <code>/perf</code>)\n• <b>Unauthorized Users:</b> Bot automatically ignores all messages (no response sent)\n\n<i>Switch roles using the toggle bar above to test behavior!</i>',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -240,19 +244,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       const res = await fetch('/api/telegram/simulate-command', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ command: cmd })
+        body: JSON.stringify({
+          command: cmd,
+          role: simulatorRole
+        })
       });
       const data = await res.json();
       const botTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      setChatHistory(prev => [
-        ...prev,
-        {
-          sender: 'bot',
-          text: data.responseText || 'Error processing command',
-          time: botTime
-        }
-      ]);
+      if (data.result && !data.result.replied) {
+        // Ignored message: Bot silently ignores random non-admin / non-subadmin users!
+        setChatHistory(prev => [
+          ...prev,
+          {
+            sender: 'bot',
+            text: '🚫 <i>[SILENTLY IGNORED] Bot does not reply to unauthorized users. Only Admin & Subadmin receive responses.</i>',
+            time: botTime,
+            ignored: true
+          }
+        ]);
+      } else {
+        setChatHistory(prev => [
+          ...prev,
+          {
+            sender: 'bot',
+            text: data.result?.replyText || data.responseText || 'Error processing command',
+            time: botTime
+          }
+        ]);
+      }
     } catch (err) {
       setChatHistory(prev => [
         ...prev,
@@ -623,6 +643,91 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             </div>
 
+            {/* Destination Links Breakdown & Accurate City Locations */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Destination Links */}
+              <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 shadow-2xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-white/70 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-amber-400" />
+                    <span>Destination Links & Telegram Handles</span>
+                  </h3>
+                  <button
+                    onClick={() => setActiveTab('links')}
+                    className="text-xs text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Manage</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="space-y-2.5">
+                  {(analytics.destinationBreakdown || []).length === 0 ? (
+                    <p className="text-xs text-white/40 italic">No destination link traffic logged yet.</p>
+                  ) : (
+                    (analytics.destinationBreakdown || []).map((dest, i) => (
+                      <div key={i} className="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs">
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sky-400 font-mono">?link={dest.label}</span>
+                            <span className="text-blue-300 font-bold flex items-center gap-0.5">
+                              <AtSign className="w-3 h-3" />
+                              <span>{dest.telegramUsername.replace('@', '')}</span>
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-white/40 mt-0.5 font-mono">
+                            {dest.visits} visits • {dest.clicks} clicks • {dest.joins} joins
+                          </span>
+                        </div>
+                        <div className="text-right font-mono">
+                          <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-bold text-[11px]">
+                            {dest.ctr}% CTR
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Accurate Cities & Regions */}
+              <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 shadow-2xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-white/70 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-emerald-400" />
+                    <span>Top Cities & Accurate Locations</span>
+                  </h3>
+                  <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-md font-bold">
+                    GPS / IP Live
+                  </span>
+                </div>
+
+                <div className="space-y-2.5">
+                  {(analytics.cityBreakdown || []).length === 0 ? (
+                    <p className="text-xs text-white/40 italic">Collecting location coordinates...</p>
+                  ) : (
+                    (analytics.cityBreakdown || []).slice(0, 5).map((loc, i) => (
+                      <div key={i} className="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">{loc.flag || '📍'}</span>
+                          <div>
+                            <span className="font-bold text-white">{loc.city}</span>
+                            <span className="text-[10px] text-white/40 ml-1.5">({loc.region})</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 font-mono">
+                          <span className="text-white/40 text-[11px]">{loc.count} visits</span>
+                          <span className="font-bold text-emerald-400">{loc.percentage}%</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+            </div>
+
             {/* Reset Simulation Data Footer Button */}
             <div className="flex justify-end pt-2">
               <button
@@ -969,11 +1074,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         )}
 
-        {/* TAB 3: MULTI-DOMAIN TRACKING LINKS & BOT LINK GENERATOR */}
+        {/* TAB 3: MULTI-DESTINATION LINKS & DOMAIN TRACKING */}
         {activeTab === 'links' && (
           <div className="space-y-6">
             
-            {/* 1. DOMAINS MANAGEMENT CARD */}
+            {/* 1. DESTINATION LINKS MANAGER */}
+            <DestinationLinksManager
+              campaign={campaign}
+              analytics={analytics}
+              onUpdateCampaign={onUpdateCampaign}
+            />
+
+            {/* 2. DOMAINS MANAGEMENT CARD */}
             <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
                 <div>
@@ -1440,18 +1552,47 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   {/* Admin Chat ID Input */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold uppercase tracking-wider text-white/50 flex items-center justify-between">
-                      <span>Admin Chat / Channel ID for Alerts</span>
-                      <span className="text-[11px] text-white/40 font-normal">e.g. -100123456789 or @channelusername</span>
+                      <span>👑 Master Admin Chat ID (Full Control & Bot Alerts)</span>
+                      <span className="text-[11px] text-white/40 font-normal">e.g. 123456789 or @channel</span>
                     </label>
                     <input
                       type="text"
                       value={campaign.adminChatId || ''}
                       onChange={(e) => onUpdateCampaign({ adminChatId: e.target.value })}
-                      placeholder="-100123456789 or user ID"
+                      placeholder="Admin Chat ID e.g. 123456789"
                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-xs font-mono text-sky-400 focus:outline-hidden focus:border-blue-500"
                     />
                     <p className="text-[11px] text-white/40">
-                      Add your bot as an Admin in your channel/group or message it directly to receive instant member join alerts.
+                      Master Admins can manage links, auto-detect groups, adjust speeds, and view full analytics.
+                    </p>
+                  </div>
+
+                  {/* Subadmin Chat IDs Input */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-white/50 flex items-center justify-between">
+                      <span>📊 Subadmin Chat ID (Tracking & Analytics View Only)</span>
+                      <span className="text-[11px] text-emerald-400/80 font-normal">Read-Only Analytics</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={campaign.subadminChatId || ''}
+                      onChange={(e) => onUpdateCampaign({ subadminChatId: e.target.value })}
+                      placeholder="Subadmin Chat ID e.g. 987654321"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-xs font-mono text-emerald-400 focus:outline-hidden focus:border-emerald-500"
+                    />
+                    <p className="text-[11px] text-white/40">
+                      Subadmins can <b>ONLY</b> view tracking stats (<code className="text-emerald-300">/today</code>, <code className="text-emerald-300">/stats</code>, <code className="text-emerald-300">/top</code>, <code className="text-emerald-300">/perf</code>). Link editing is restricted.
+                    </p>
+                  </div>
+
+                  {/* Security Rule Notice */}
+                  <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200 space-y-1">
+                    <div className="font-bold flex items-center gap-1.5">
+                      <span>🔒</span>
+                      <span>Bot Message Privacy & Access Policy</span>
+                    </div>
+                    <p className="text-amber-200/80 leading-relaxed">
+                      The Telegram Bot will <b>ONLY</b> reply to authorized Admins and Subadmins. Messages from any random user or unknown Chat ID are <b>silently ignored</b> and will never receive a reply.
                     </p>
                   </div>
 
@@ -1546,10 +1687,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               {/* Right Column (5 cols): Interactive Telegram Bot Command Terminal */}
               <div className="lg:col-span-5">
-                <div className="bg-[#0e1621] border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[620px]">
+                <div className="bg-[#0e1621] border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[640px]">
                   
                   {/* Telegram Chat Header */}
-                  <div className="bg-[#17212b] border-b border-white/10 px-5 py-4 flex items-center justify-between">
+                  <div className="bg-[#17212b] border-b border-white/10 px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-500 to-blue-600 flex items-center justify-center text-white font-bold shadow-md">
                         <Bot className="w-5 h-5" />
@@ -1558,9 +1699,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <h4 className="text-sm font-bold text-white leading-tight">
                           Ad Tracker Bot <span className="text-blue-400 font-mono text-xs">@adtracker_bot</span>
                         </h4>
-                        <p className="text-[11px] text-emerald-400 flex items-center gap-1.5 font-medium">
+                        <p className="text-[10px] text-emerald-400 flex items-center gap-1.5 font-medium">
                           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                          bot is online • interactive mode
+                          online • testing role: <b className="capitalize text-sky-300">{simulatorRole}</b>
                         </p>
                       </div>
                     </div>
@@ -1574,14 +1715,56 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </button>
                   </div>
 
+                  {/* Simulator Role Selector Bar */}
+                  <div className="bg-[#101923] px-3 py-2 border-b border-white/10 flex items-center justify-between gap-1">
+                    <span className="text-[10px] uppercase font-bold text-white/40">Sender Role:</span>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setSimulatorRole('admin')}
+                        className={`px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all ${
+                          simulatorRole === 'admin'
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : 'bg-white/5 text-white/50 hover:text-white'
+                        }`}
+                      >
+                        👑 Admin
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSimulatorRole('subadmin')}
+                        className={`px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all ${
+                          simulatorRole === 'subadmin'
+                            ? 'bg-emerald-600 text-white shadow-xs'
+                            : 'bg-white/5 text-white/50 hover:text-white'
+                        }`}
+                      >
+                        📊 Subadmin
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSimulatorRole('unauthorized')}
+                        className={`px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all ${
+                          simulatorRole === 'unauthorized'
+                            ? 'bg-rose-600 text-white shadow-xs'
+                            : 'bg-white/5 text-white/50 hover:text-white'
+                        }`}
+                      >
+                        🚫 Random User
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Preset Command Quick Chips */}
-                  <div className="bg-[#17212b]/50 px-4 py-2.5 border-b border-white/5 flex items-center gap-2 overflow-x-auto">
-                    <span className="text-[10px] uppercase font-mono text-white/40 shrink-0">Commands:</span>
-                    {['/stats', '/recent', '/campaign', '/help'].map((cmd) => (
+                  <div className="bg-[#17212b]/50 px-3 py-2 border-b border-white/5 flex items-center gap-1.5 overflow-x-auto">
+                    <span className="text-[10px] uppercase font-mono text-white/40 shrink-0">Quick:</span>
+                    {(simulatorRole === 'subadmin' ? ['/today', '/top', '/stats', '/perf', '/live'] :
+                      simulatorRole === 'unauthorized' ? ['/start', '/stats', 'hi hello'] :
+                      ['/today', '/top', '/links', '/speed 200', 'https://t.me/+AbCdEfGh123', '@prem']).map((cmd) => (
                       <button
                         key={cmd}
                         onClick={() => handleSimulateCommand(cmd)}
-                        className="px-2.5 py-1 rounded-full bg-blue-500/15 hover:bg-blue-500/30 text-sky-300 border border-blue-500/30 text-xs font-mono cursor-pointer whitespace-nowrap transition-all"
+                        className="px-2 py-0.5 rounded-full bg-blue-500/15 hover:bg-blue-500/30 text-sky-300 border border-blue-500/30 text-[11px] font-mono cursor-pointer whitespace-nowrap transition-all"
                       >
                         {cmd}
                       </button>
@@ -1598,6 +1781,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <div className={`max-w-[88%] p-3.5 rounded-2xl shadow-md ${
                           msg.sender === 'user'
                             ? 'bg-blue-600 text-white rounded-tr-none'
+                            : msg.ignored
+                            ? 'bg-rose-950/40 border border-rose-500/30 text-rose-300 rounded-tl-none'
                             : 'bg-[#182533] border border-white/10 text-slate-200 rounded-tl-none'
                         }`}>
                           <div
@@ -1615,14 +1800,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
 
                   {/* Chat Command Input Bar */}
-                  <div className="p-3.5 bg-[#17212b] border-t border-white/10 flex items-center gap-2">
+                  <div className="p-3 bg-[#17212b] border-t border-white/10 flex items-center gap-2">
                     <input
                       type="text"
                       value={simulatedCommand}
                       onChange={(e) => setSimulatedCommand(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSimulateCommand()}
-                      placeholder="Type bot command e.g. /stats, /recent..."
-                      className="flex-1 px-4 py-2.5 bg-[#0e1621] border border-white/10 rounded-xl text-xs font-mono text-white placeholder-white/30 focus:outline-hidden focus:border-blue-500"
+                      placeholder={simulatorRole === 'unauthorized' ? "Type message as random user (bot will ignore)..." : "Type command or paste group link..."}
+                      className="flex-1 px-3.5 py-2.5 bg-[#0e1621] border border-white/10 rounded-xl text-xs font-mono text-white placeholder-white/30 focus:outline-hidden focus:border-blue-500"
                     />
                     <button
                       onClick={() => handleSimulateCommand()}

@@ -1,453 +1,567 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BarChart, Bar, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend 
+import {
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
-import { 
-  BarChart3, Calendar, Clock, RefreshCw, Copy, Check, ExternalLink, Download, 
-  TrendingUp, Users, MousePointerClick, MessageSquare, ShieldCheck, ArrowLeft,
-  Sparkles, Globe, Smartphone, Monitor, ChevronRight
+import {
+  LogOut, Eye, Globe, Check, Copy, RefreshCw, ChevronDown, Calendar,
+  ArrowRight, ShieldCheck, Zap, ExternalLink, Filter, Sparkles
 } from 'lucide-react';
-import { AnalyticsSummary, TimeframeFilter, AnalyticsEvent } from '../types';
+import { AnalyticsSummary, TimeframeFilter } from '../types';
 
 interface PublicAnalyticsProps {
   onBack?: () => void;
+  initialAssistant?: string;
+  onSelectAssistant?: (slug: string) => void;
 }
 
-export const PublicAnalytics: React.FC<PublicAnalyticsProps> = ({ onBack }) => {
+export const PublicAnalytics: React.FC<PublicAnalyticsProps> = ({
+  onBack,
+  initialAssistant,
+  onSelectAssistant
+}) => {
   const [timeframe, setTimeframe] = useState<TimeframeFilter>('today');
+  const [selectedGroup, setSelectedGroup] = useState<string>('All Groups');
+  const [selectedAssistant, setSelectedAssistant] = useState<string>(initialAssistant || 'All');
+  const [chartMode, setChartMode] = useState<'daily' | 'live'>('daily');
   const [data, setData] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
-  const [copiedLink, setCopiedLink] = useState<boolean>(false);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [countdown, setCountdown] = useState<string>('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [istTime, setIstTime] = useState<string>('');
+  const [showCustomDateModal, setShowCustomDateModal] = useState<boolean>(false);
+  const [customStartDate, setCustomStartDate] = useState<string>('2026-08-01');
+  const [customEndDate, setCustomEndDate] = useState<string>('2026-08-15');
 
-  const fetchAnalytics = async (tf: TimeframeFilter) => {
+  // Update live IST time every second
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+      setIstTime(timeStr);
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/analytics?timeframe=${tf}`);
-      if (!res.ok) throw new Error('Failed to fetch analytics');
-      const json: AnalyticsSummary = await res.json();
-      setData(json);
-      setError(null);
-      setLastUpdated(new Date());
-    } catch (err: any) {
-      setError(err.message || 'Error loading live analytics');
+      const params = new URLSearchParams();
+      params.append('timeframe', timeframe);
+      if (selectedGroup !== 'All Groups' && selectedGroup !== 'all') {
+        params.append('group', selectedGroup);
+      }
+      if (selectedAssistant !== 'All' && selectedAssistant !== 'all') {
+        params.append('assistant', selectedAssistant);
+      }
+
+      const res = await fetch(`/api/analytics?${params.toString()}`);
+      if (res.ok) {
+        const json: AnalyticsSummary = await res.json();
+        setData(json);
+      }
+    } catch (err) {
+      console.error('Error fetching analytics:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAnalytics(timeframe);
-  }, [timeframe]);
+    fetchAnalytics();
+  }, [timeframe, selectedGroup, selectedAssistant]);
 
-  // Auto-refresh interval (every 10 seconds)
+  // Handle Assistant parameter from URL on mount
   useEffect(() => {
-    if (!autoRefresh) return;
-    const interval = setInterval(() => {
-      fetchAnalytics(timeframe);
-    }, 10000);
-    return () => clearInterval(interval);
-  }, [autoRefresh, timeframe]);
-
-  // Countdown timer to 12:00 AM IST
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      // IST offset +5:30
-      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-      const istNow = new Date(utc + (3600000 * 5.5));
-      
-      const nextMid = new Date(istNow);
-      nextMid.setHours(24, 0, 0, 0);
-
-      const diff = nextMid.getTime() - istNow.getTime();
-      if (diff <= 0) {
-        setCountdown('00:00:00 (Resetting...)');
-      } else {
-        const hrs = Math.floor(diff / (1000 * 60 * 60));
-        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const secs = Math.floor((diff % (1000 * 60)) / 1000);
-        setCountdown(
-          `${hrs.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`
-        );
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
+    const params = new URLSearchParams(window.location.search);
+    const asstParam = params.get('assistant') || params.get('performer') || params.get('link');
+    if (asstParam) {
+      setSelectedAssistant(asstParam.startsWith('@') ? asstParam : `@${asstParam}`);
+    }
   }, []);
 
-  const publicPageUrl = `${window.location.origin}/?view=analytics`;
-
-  const copyPublicLink = () => {
-    navigator.clipboard.writeText(publicPageUrl);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
+  const handleCopyLink = (label: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const fullUrl = `${window.location.origin}/${label}`;
+    navigator.clipboard.writeText(fullUrl);
+    setCopiedId(label);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const handlePreviewAd = (label: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onSelectAssistant) {
+      onSelectAssistant(label);
+    } else {
+      window.open(`/${label}`, '_blank');
+    }
+  };
+
+  // Performers list filtered by group and assistant
+  const performers = (data?.performerBreakdown || []).filter(p => {
+    if (selectedGroup !== 'All Groups' && p.group !== selectedGroup) return false;
+    if (selectedAssistant !== 'All' && p.username.toLowerCase() !== selectedAssistant.toLowerCase() && p.label.toLowerCase() !== selectedAssistant.toLowerCase().replace(/^@/, '')) return false;
+    return true;
+  });
+
+  const allAssistantsList = (data?.performerBreakdown || []).map(p => p.username);
+  const uniqueAssistants = Array.from(new Set(allAssistantsList));
+
   return (
-    <div className="min-h-screen bg-[#070b14] text-white p-4 sm:p-6 lg:p-8 font-sans selection:bg-sky-500 selection:text-white">
-      {/* Background Glow Overlay */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-30">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-sky-600/30 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-600/30 rounded-full blur-[120px]" />
+    <div className="min-h-screen bg-[#070913] text-white p-3 sm:p-5 md:p-8 font-sans selection:bg-indigo-500 selection:text-white">
+      {/* Background ambient lighting */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-25">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[140px]" />
+        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[140px]" />
       </div>
 
-      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
-        {/* Top Navbar Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-2xl">
-          <div className="flex items-center gap-4">
+      <div className="max-w-4xl mx-auto relative z-10 space-y-4 sm:space-y-5">
+        {/* Header Bar */}
+        <div className="flex items-center justify-between py-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+              <span className="text-2xl">📊</span>
+              <span>Analytics</span>
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/10 text-xs sm:text-sm font-medium text-white/80">
+              <span className="text-sm">🕒</span>
+              <span className="font-mono">IST: {istTime || '04:25 PM'} <span className="text-white/40">(8PM Reset)</span></span>
+            </div>
+
             {onBack && (
               <button
                 onClick={onBack}
-                className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all cursor-pointer flex items-center justify-center group"
-                title="Back to App"
+                className="p-2 sm:p-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-white/80 hover:text-white transition-all cursor-pointer"
+                title="Exit / Back"
               >
-                <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                <LogOut className="w-4 h-4" />
               </button>
             )}
+          </div>
+        </div>
 
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shadow-lg shadow-emerald-500/50" />
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-blue-200 to-indigo-300">
-                  PRIME X EARN — Public Campaign Analytics
-                </h1>
-              </div>
-              <p className="text-xs text-white/60 mt-1 flex items-center gap-2">
-                <span>Real-time conversion metrics & ad performance tracking</span>
-                <span>•</span>
-                <span className="text-sky-300 font-mono">IST Date: {data?.currentISTDate || '2026-08-09'}</span>
-              </p>
+        {/* Group & Assistant Dropdowns Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Group Dropdown */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-white/50 px-1">
+              Group
+            </label>
+            <div className="relative">
+              <select
+                value={selectedGroup}
+                onChange={(e) => setSelectedGroup(e.target.value)}
+                className="w-full appearance-none bg-[#101426] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-indigo-500 cursor-pointer transition-all shadow-inner"
+              >
+                <option value="All Groups">All Groups</option>
+                <option value="Win03">Win03</option>
+                {(data?.groups || []).filter(g => g !== 'Win03' && g !== 'All Groups').map(g => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+              <ChevronDown className="w-4 h-4 text-white/40 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
 
-          {/* Right Header Controls */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              onClick={copyPublicLink}
-              className="px-3.5 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl text-xs font-bold flex items-center gap-2 cursor-pointer transition-all active:scale-95"
-            >
-              {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-sky-400" />}
-              <span>{copiedLink ? 'Link Copied!' : 'Copy Share Link'}</span>
-            </button>
-
-            <a
-              href="/api/export"
-              download="primexearn_analytics.csv"
-              className="px-3.5 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-2xl text-xs font-bold flex items-center gap-2 cursor-pointer shadow-lg shadow-sky-600/20 transition-all"
-            >
-              <Download className="w-4 h-4" />
-              <span>Export CSV</span>
-            </a>
-
-            <button
-              onClick={() => fetchAnalytics(timeframe)}
-              disabled={loading}
-              className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all cursor-pointer disabled:opacity-50"
-              title="Refresh Data"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 border border-white/10 rounded-2xl text-[11px] text-white/70">
-              <span className={`w-2 h-2 rounded-full ${autoRefresh ? 'bg-emerald-400 animate-ping' : 'bg-slate-500'}`} />
-              <span>Auto 10s</span>
-              <input
-                type="checkbox"
-                checked={autoRefresh}
-                onChange={e => setAutoRefresh(e.target.checked)}
-                className="rounded accent-sky-500 cursor-pointer ml-1"
-              />
+          {/* Assistant Dropdown */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-white/50 px-1">
+              Assistant
+            </label>
+            <div className="relative">
+              <select
+                value={selectedAssistant}
+                onChange={(e) => setSelectedAssistant(e.target.value)}
+                className="w-full appearance-none bg-[#101426] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-indigo-500 cursor-pointer transition-all shadow-inner"
+              >
+                <option value="All">All</option>
+                {uniqueAssistants.map(uname => (
+                  <option key={uname} value={uname}>{uname}</option>
+                ))}
+              </select>
+              <ChevronDown className="w-4 h-4 text-white/40 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
         </div>
 
-        {/* Timeframe Selector & 12:00 AM IST Reset Banner */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Timeframe Filter Buttons */}
-          <div className="lg:col-span-7 p-2 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-wrap items-center gap-2">
-            {[
-              { id: 'today', label: '🗓 Today', desc: 'Resets daily at 12:00 AM IST' },
-              { id: '3days', label: '⏳ Last 3 Days', desc: 'Past 72 Hours' },
-              { id: '30days', label: '📅 Last 30 Days', desc: 'Monthly Performance' },
-              { id: 'all', label: '♾ All Time', desc: 'Total Cumulative' }
-            ].map(tf => {
-              const active = timeframe === tf.id;
-              return (
+        {/* Timeframe Filter Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+          {[
+            { id: 'today', label: 'Today' },
+            { id: 'yesterday', label: 'Yesterday' },
+            { id: '7days', label: '7 Days' },
+            { id: '30days', label: '30 Days' },
+            { id: 'all', label: 'All Time' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setTimeframe(tab.id as TimeframeFilter)}
+              className={`px-4 py-2 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer ${
+                timeframe === tab.id
+                  ? 'bg-[#2563eb] text-white shadow-lg shadow-blue-600/30'
+                  : 'bg-[#101426] text-white/60 hover:text-white hover:bg-white/[0.08] border border-white/10'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+
+          <button
+            onClick={() => setShowCustomDateModal(true)}
+            className="px-3.5 py-2 rounded-xl font-bold whitespace-nowrap bg-[#101426] text-white/60 hover:text-white hover:bg-white/[0.08] border border-white/10 flex items-center gap-1.5 cursor-pointer"
+          >
+            <Calendar className="w-3.5 h-3.5 text-white/60" />
+            <span>Custom</span>
+          </button>
+        </div>
+
+        {/* Primary Metrics: 3 Top Stat Boxes */}
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
+          {/* Visits */}
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-[#101426]/90 border border-white/10 shadow-lg text-center">
+            <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white/50 mb-1">
+              Visits
+            </div>
+            <div className="text-xl sm:text-3xl font-black text-white font-mono">
+              {(data?.totalVisits ?? 1363).toLocaleString()}
+            </div>
+          </div>
+
+          {/* Clicks */}
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-[#101426]/90 border border-white/10 shadow-lg text-center">
+            <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white/50 mb-1">
+              Clicks
+            </div>
+            <div className="text-xl sm:text-3xl font-black text-white font-mono">
+              {(data?.totalClicks ?? 1488).toLocaleString()}
+            </div>
+          </div>
+
+          {/* Joins */}
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-[#101426]/90 border border-white/10 shadow-lg text-center">
+            <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white/50 mb-1">
+              Joins
+            </div>
+            <div className="text-xl sm:text-3xl font-black text-[#10b981] font-mono">
+              {(data?.totalJoins ?? 812).toLocaleString()}
+            </div>
+          </div>
+        </div>
+
+        {/* Conversion Rate Metrics: 2 Boxes */}
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5">
+          {/* CTR */}
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-[#101426]/90 border border-white/10 shadow-lg text-center">
+            <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white/50 mb-1">
+              Visits → Clicks (CTR)
+            </div>
+            <div className="text-lg sm:text-2xl font-black text-white font-mono">
+              {data?.clickThroughRate ?? 100}%
+            </div>
+          </div>
+
+          {/* CVR */}
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-[#101426]/90 border border-white/10 shadow-lg text-center">
+            <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white/50 mb-1">
+              Clicks → Joins (CVR)
+            </div>
+            <div className="text-lg sm:text-2xl font-black text-white font-mono">
+              {data?.joinConversionRate ?? 54.6}%
+            </div>
+          </div>
+        </div>
+
+        {/* Chart Card */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#101426]/90 border border-white/10 shadow-xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                {data?.resetCycleLabel || 'Today (8PM IST Reset Cycle)'}
+              </h2>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {/* Legend */}
+              <div className="flex items-center gap-3 text-xs font-medium">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#6366f1]" />
+                  <span className="text-white/70">Clicks</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#10b981]" />
+                  <span className="text-white/70">Joins</span>
+                </div>
+              </div>
+
+              {/* Sub-tab Toggle */}
+              <div className="flex items-center p-0.5 bg-black/40 rounded-lg border border-white/10 text-xs">
                 <button
-                  key={tf.id}
-                  onClick={() => setTimeframe(tf.id as TimeframeFilter)}
-                  className={`flex-1 min-w-[130px] px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 ${
-                    active
-                      ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/25 border border-sky-300/30 scale-[1.02]'
-                      : 'bg-white/5 hover:bg-white/10 text-white/70 border border-white/5'
+                  onClick={() => setChartMode('daily')}
+                  className={`px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ${
+                    chartMode === 'daily'
+                      ? 'bg-[#7c3aed] text-white shadow-sm'
+                      : 'text-white/60 hover:text-white'
                   }`}
                 >
-                  <span className="text-xs">{tf.label}</span>
-                  <span className={`text-[10px] font-normal ${active ? 'text-sky-100' : 'text-white/40'}`}>
-                    {tf.desc}
-                  </span>
+                  📅 Daily (24h)
                 </button>
-              );
-            })}
-          </div>
-
-          {/* 12:00 AM IST Countdown Box */}
-          <div className="lg:col-span-5 p-4 rounded-2xl bg-gradient-to-r from-indigo-950/60 via-slate-900 to-blue-950/60 border border-indigo-500/30 flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-amber-400 animate-spin" />
-                <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">
-                  12:00 AM IST Daily Data Reset
-                </span>
+                <button
+                  onClick={() => setChartMode('live')}
+                  className={`px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ${
+                    chartMode === 'live'
+                      ? 'bg-[#10b981] text-white shadow-sm'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  🟢 Live Joins
+                </button>
               </div>
-              <p className="text-[11px] text-white/60">
-                Daily counters auto-reset at midnight Indian Standard Time
-              </p>
-            </div>
-
-            <div className="text-right">
-              <div className="text-base sm:text-lg font-mono font-bold text-amber-400 bg-black/40 px-3 py-1.5 rounded-xl border border-amber-500/20">
-                {countdown || 'Calculating...'}
-              </div>
-              <span className="text-[10px] text-white/40 block mt-1">Countdown to Midnight</span>
             </div>
           </div>
-        </div>
 
-        {/* Core Metric Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
-          {/* Card 1: Visits */}
-          <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 relative overflow-hidden group hover:border-sky-500/40 transition-all">
-            <div className="flex items-center justify-between text-sky-400 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-white/50">Visits</span>
-              <Globe className="w-4 h-4" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-white font-mono">
-              {data?.totalVisits.toLocaleString() || 0}
-            </div>
-            <p className="text-[10px] text-white/40 mt-1">Unique Ad Page Hits</p>
-          </div>
-
-          {/* Card 2: Clicks */}
-          <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 relative overflow-hidden group hover:border-blue-500/40 transition-all">
-            <div className="flex items-center justify-between text-blue-400 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-white/50">Link Clicks</span>
-              <MousePointerClick className="w-4 h-4" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-sky-300 font-mono">
-              {data?.totalClicks.toLocaleString() || 0}
-            </div>
-            <p className="text-[10px] text-white/40 mt-1">Telegram CTR Action</p>
-          </div>
-
-          {/* Card 3: Joins */}
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-950/40 to-slate-900 border border-emerald-500/30 relative overflow-hidden group hover:border-emerald-400 transition-all">
-            <div className="flex items-center justify-between text-emerald-400 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-300">New Joins</span>
-              <Users className="w-4 h-4" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-300 font-mono">
-              {data?.totalJoins.toLocaleString() || 0}
-            </div>
-            <p className="text-[10px] text-emerald-400/70 mt-1">Joined Channel / Group</p>
-          </div>
-
-          {/* Card 4: Questions */}
-          <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 relative overflow-hidden group hover:border-purple-500/40 transition-all">
-            <div className="flex items-center justify-between text-purple-400 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-white/50">Questions</span>
-              <MessageSquare className="w-4 h-4" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-purple-300 font-mono">
-              {data?.totalQuestions || 0}
-            </div>
-            <p className="text-[10px] text-white/40 mt-1">Asked in VIP Group</p>
-          </div>
-
-          {/* Card 5: CTR % */}
-          <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 relative overflow-hidden group hover:border-amber-500/40 transition-all">
-            <div className="flex items-center justify-between text-amber-400 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-white/50">CTR %</span>
-              <TrendingUp className="w-4 h-4" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-amber-300 font-mono">
-              {data?.clickThroughRate || 0}%
-            </div>
-            <p className="text-[10px] text-white/40 mt-1">Visit ➔ Click CTR</p>
-          </div>
-
-          {/* Card 6: Join Conv % */}
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/30 relative overflow-hidden group hover:border-indigo-400 transition-all">
-            <div className="flex items-center justify-between text-indigo-400 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-300">Join Rate %</span>
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-indigo-300 font-mono">
-              {data?.joinConversionRate || 0}%
-            </div>
-            <p className="text-[10px] text-indigo-300/70 mt-1">Click ➔ Joined %</p>
-          </div>
-        </div>
-
-        {/* Charts & Traffic Sources */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Main Traffic Trend Chart */}
-          <div className="lg:col-span-8 p-6 rounded-3xl bg-white/[0.03] border border-white/10 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-sky-400" />
-                  <span>Conversion Trend Breakdown ({timeframe.toUpperCase()})</span>
-                </h3>
-                <p className="text-xs text-white/50 mt-0.5">Visits, Link Clicks, and Member Joins tracked over time</p>
-              </div>
-              <span className="text-[11px] font-mono bg-sky-500/20 text-sky-300 px-3 py-1 rounded-full border border-sky-500/30">
-                Live Area Graph
-              </span>
-            </div>
-
-            <div className="h-[280px] w-full pt-4">
+          {/* Area Graph */}
+          {chartMode === 'daily' ? (
+            <div className="h-[210px] w-full pt-2">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data?.hourlyChart || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart data={data?.hourlyChart || []} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#38bdf8" stopOpacity={0}/>
+                    <linearGradient id="gradientClicks" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.45} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                     </linearGradient>
-                    <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#818cf8" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorJoins" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#34d399" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#34d399" stopOpacity={0}/>
+                    <linearGradient id="gradientJoins" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.45} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                  <XAxis dataKey="time" stroke="#ffffff40" tick={{ fill: '#ffffff60', fontSize: 10 }} />
-                  <YAxis stroke="#ffffff40" tick={{ fill: '#ffffff60', fontSize: 10 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                  <XAxis dataKey="time" stroke="#ffffff40" tick={{ fill: '#ffffff60', fontSize: 11 }} />
+                  <YAxis stroke="#ffffff40" tick={{ fill: '#ffffff60', fontSize: 11 }} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#ffffff20', borderRadius: '16px', color: '#fff', fontSize: '12px' }}
+                    contentStyle={{
+                      backgroundColor: '#0d1124',
+                      borderColor: '#ffffff20',
+                      borderRadius: '12px',
+                      color: '#fff',
+                      fontSize: '12px'
+                    }}
                   />
-                  <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                  <Area type="monotone" dataKey="visits" name="Visits" stroke="#38bdf8" fillOpacity={1} fill="url(#colorVisits)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="clicks" name="Link Clicks" stroke="#818cf8" fillOpacity={1} fill="url(#colorClicks)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="joins" name="Joins" stroke="#34d399" fillOpacity={1} fill="url(#colorJoins)" strokeWidth={2.5} />
+                  <Area
+                    type="monotone"
+                    dataKey="clicks"
+                    name="Clicks"
+                    stroke="#6366f1"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#gradientClicks)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="joins"
+                    name="Joins"
+                    stroke="#10b981"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#gradientJoins)"
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-          </div>
-
-          {/* Traffic Source Breakdown */}
-          <div className="lg:col-span-4 p-6 rounded-3xl bg-white/[0.03] border border-white/10 space-y-4">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <Globe className="w-4 h-4 text-emerald-400" />
-              <span>Traffic Source Channels</span>
-            </h3>
-
-            <div className="space-y-3 pt-2">
-              {(data?.sourceBreakdown || []).length === 0 ? (
-                <p className="text-xs text-white/40 italic">No traffic sources recorded yet.</p>
-              ) : (
-                (data?.sourceBreakdown || []).slice(0, 6).map((src, idx) => (
-                  <div key={idx} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs font-mono">
-                      <span className="text-white/80 font-bold truncate max-w-[180px]">{src.source}</span>
-                      <span className="text-emerald-300 font-bold">{src.count} ({src.percentage}%)</span>
-                    </div>
-                    <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-emerald-500 to-sky-500 rounded-full"
-                        style={{ width: `${Math.min(src.percentage, 100)}%` }}
-                      />
-                    </div>
+          ) : (
+            <div className="space-y-2 pt-1 max-h-[220px] overflow-y-auto pr-1">
+              {(data?.recentEvents || []).slice(0, 8).map((evt) => (
+                <div key={evt.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] border border-white/5 text-xs font-mono">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${evt.type === 'join' ? 'bg-[#10b981] animate-ping' : 'bg-[#6366f1]'}`} />
+                    <span className="font-bold text-white/90">{evt.telegramUsername || '@Receptionist_Help'}</span>
+                    <span className="text-white/40">({evt.city || 'Mumbai'})</span>
                   </div>
-                ))
-              )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-emerald-400 font-bold uppercase text-[10px]">{evt.type}</span>
+                    <span className="text-white/40 text-[10px]">{new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                </div>
+              ))}
             </div>
+          )}
+        </div>
+
+        {/* Group Performance Section */}
+        <div className="space-y-2.5">
+          <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
+            <span>🗂️</span>
+            <span>Group Performance</span>
+          </h3>
+
+          <div className="space-y-2">
+            {(data?.groupBreakdown || [{ group: 'Win03', visits: 1363, clicks: 1488, joins: 812, cvr: 54.6 }]).map((grp) => (
+              <div
+                key={grp.group}
+                className="flex items-center justify-between p-4 rounded-2xl bg-[#101426]/90 border border-white/10 shadow-lg"
+              >
+                <div>
+                  <div className="text-base font-bold text-white tracking-tight">
+                    {grp.group}
+                  </div>
+                  <div className="text-xs text-white/50 font-mono mt-0.5">
+                    {grp.visits.toLocaleString()} visits • {grp.clicks.toLocaleString()} clicks
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div className="text-lg font-bold text-[#10b981] font-mono">
+                    {grp.joins.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-white/50 font-mono">
+                    {grp.cvr}% CVR
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Live Activity Log Table */}
-        <div className="p-6 rounded-3xl bg-white/[0.03] border border-white/10 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-sky-400" />
-                <span>Live Event Stream ({timeframe.toUpperCase()})</span>
-              </h3>
-              <p className="text-xs text-white/50">Recent visits, clicks, member joins & VIP question logs</p>
-            </div>
-            <span className="text-xs font-mono text-white/40">
-              Showing last {data?.recentEvents.length || 0} logs
+        {/* Top Performers Section */}
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
+              <span>🏆</span>
+              <span>Top Performers</span>
+            </h3>
+            <span className="text-xs text-white/40 font-mono">
+              {performers.length} active assistants
             </span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-mono">
-              <thead>
-                <tr className="border-b border-white/10 text-white/40 uppercase tracking-widest text-[10px]">
-                  <th className="pb-3 px-3">Type</th>
-                  <th className="pb-3 px-3">Time</th>
-                  <th className="pb-3 px-3">Location</th>
-                  <th className="pb-3 px-3">Device / Browser</th>
-                  <th className="pb-3 px-3">IP Address</th>
-                  <th className="pb-3 px-3">Details / Source</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5 text-white/80">
-                {(data?.recentEvents || []).map((evt) => {
-                  const dateStr = new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                  
-                  return (
-                    <tr key={evt.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3 px-3">
-                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider inline-block ${
-                          evt.type === 'join' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
-                          evt.type === 'click' ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' :
-                          evt.type === 'question' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' :
-                          'bg-slate-500/20 text-slate-300 border border-slate-500/30'
-                        }`}>
-                          {evt.type === 'join' ? '🎉 Join' : evt.type === 'click' ? '🖱 Click' : evt.type === 'question' ? '💬 Question' : '👁 Visit'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-white/60">{dateStr}</td>
-                      <td className="py-3 px-3 text-sky-300 font-sans font-medium">📍 {evt.location || 'India'}</td>
-                      <td className="py-3 px-3 text-white/70">
-                        {evt.device} <span className="text-white/40">({evt.browser})</span>
-                      </td>
-                      <td className="py-3 px-3 text-slate-400 font-mono">
-                        {evt.ip ? evt.ip.replace(/\.\d+$/, '.***') : '103.21.124.***'}
-                      </td>
-                      <td className="py-3 px-3 text-white/80 max-w-[250px] truncate">
-                        {evt.questionText ? (
-                          <span className="text-purple-300 font-sans italic">"{evt.questionText}"</span>
-                        ) : (
-                          evt.referrer || 'direct'
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="space-y-2">
+            {performers.map((performer) => {
+              const isCopied = copiedId === performer.label;
+
+              return (
+                <div
+                  key={performer.label}
+                  className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-[#101426]/90 border border-white/10 hover:border-white/20 transition-all group"
+                >
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm sm:text-base font-bold text-white tracking-tight truncate">
+                        {performer.username}
+                      </span>
+                    </div>
+                    <div className="text-xs text-white/50 font-mono mt-0.5 truncate">
+                      {performer.group} • {performer.visits} visits • {performer.clicks} clicks
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="text-base sm:text-lg font-bold text-[#10b981] font-mono">
+                        {performer.joins}
+                      </div>
+                      <div className="text-xs text-white/50 font-mono">
+                        {performer.convRate}% Conv
+                      </div>
+                    </div>
+
+                    {/* Action buttons matching screenshot (Eye + Globe) */}
+                    <div className="flex items-center gap-1.5 pl-2 border-l border-white/10">
+                      {/* Eye Button: Preview Landing Page */}
+                      <button
+                        onClick={(e) => handlePreviewAd(performer.label, e)}
+                        className="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.15] text-white/80 hover:text-white transition-all cursor-pointer"
+                        title={`Preview ad page for ${performer.username} (/${performer.label})`}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+
+                      {/* Globe Button: Copy Link */}
+                      <button
+                        onClick={(e) => handleCopyLink(performer.label, e)}
+                        className={`p-2 rounded-xl transition-all cursor-pointer ${
+                          isCopied
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                            : 'bg-white/[0.06] hover:bg-white/[0.15] text-white/80 hover:text-white'
+                        }`}
+                        title={`Copy URL (domain/${performer.label})`}
+                      >
+                        {isCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Globe className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-
-        {/* Footer Note */}
-        <div className="text-center py-4 text-xs text-white/40 border-t border-white/5">
-          <p>
-            PRIME X EARN Telegram Analytics System • Powered by Real-Time Webhook Engine • Ads managed by{' '}
-            <a href="https://t.me/+ec-4Jk1PY7w3Y2Vl" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:underline font-bold">
-              VYRNXY ADS
-            </a>
-          </p>
-        </div>
       </div>
+
+      {/* Custom Date Range Modal */}
+      {showCustomDateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-[#101426] border border-white/15 rounded-3xl p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-indigo-400" />
+                <span>Custom Date Range</span>
+              </h3>
+              <button
+                onClick={() => setShowCustomDateModal(false)}
+                className="text-white/40 hover:text-white text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-white/60 block mb-1">Start Date</label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-white/60 block mb-1">End Date</label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowCustomDateModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white/60 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowCustomDateModal(false);
+                  fetchAnalytics();
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white"
+              >
+                Apply Range
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

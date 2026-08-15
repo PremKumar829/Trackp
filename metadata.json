@@ -1,6 +1,6 @@
 {
   "name": "VYRNXY ADS",
-  "description": "High-converting 3D ad page for Telegram channels with real-time member visit, click, and join tracking analytics.",
+  "description": "High-converting ad landing page with multi-link destination routing, instant Telegram auto-bypass deep linking, and granular geo-location tracking analytics.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,60 +1,121 @@
 import React, { useState, useEffect } from 'react';
-import { CampaignConfig, AnalyticsSummary } from './types';
+import { CampaignConfig, AnalyticsSummary, DestinationLink } from './types';
 import { AdLandingPage } from './components/AdLandingPage';
 import { AdminDashboard } from './components/AdminDashboard';
 import { PublicAnalytics } from './components/PublicAnalytics';
 import { BrowserHeader } from './components/BrowserHeader';
 import { ParticleBackground } from './components/3d/ParticleBackground';
 import { ShieldCheck, Lock, KeyRound, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { detectAccurateLocation, GeoData } from './utils/geo';
+
+const DEFAULT_LINKS: DestinationLink[] = [
+  {
+    id: 'link-receptionist',
+    label: 'receptionist',
+    telegramTarget: 'ZiB8EiGBh4I0Yjc1',
+    telegramUsername: '@Receptionist_Help',
+    heading: "You're Just One Step Away!",
+    subtitle: 'Click the button below to get 180-380 welcome bonus by completing 1-5 task.',
+    buttonText: '🚀 Contact Receptionist',
+    badgeText: '180-380 Bonus Guaranteed',
+    footerNote: 'Secure & Verified Direct Link',
+    autoRedirect: true,
+    autoRedirectDelayMs: 400,
+    googleWebhookUrl: 'https://script.google.com/macros/s/AKfycbw5UE-Gr3gA0qr8ildKaHAVCP0FrE9mf1xibKnDlK5xwgdpAjD9blnkjRyzQoFHf4WKCQ/exec',
+    isActive: true,
+    createdAt: Date.now() - 86400000 * 2,
+  },
+  {
+    id: 'link-vip-bonus',
+    label: 'vip-bonus',
+    telegramTarget: 'https://t.me/telegram',
+    telegramUsername: '@PrimeXEarn_VIP',
+    heading: 'Instant ₹180-₹380 Welcome Reward',
+    subtitle: 'Complete 1-5 daily tasks and withdraw directly to UPI/Bank account.',
+    buttonText: '💰 Claim ₹380 Reward',
+    badgeText: 'Instant Payout Verified',
+    footerNote: 'Official Direct Gateway',
+    autoRedirect: false,
+    autoRedirectDelayMs: 300,
+    isActive: true,
+    createdAt: Date.now() - 86400000,
+  },
+  {
+    id: 'link-signals',
+    label: 'signals',
+    telegramTarget: 'https://t.me/telegram',
+    telegramUsername: '@PrimeX_FreeSignals',
+    heading: "India's #1 VIP Signals Channel",
+    subtitle: 'Get 95%+ accuracy daily market signals and income tips for free.',
+    buttonText: '✈ Join Free Signals Channel',
+    badgeText: '45,000+ Active Members',
+    footerNote: 'Official Telegram Channel',
+    autoRedirect: false,
+    autoRedirectDelayMs: 300,
+    isActive: true,
+    createdAt: Date.now() - 86400000 * 3,
+  }
+];
 
 const DEFAULT_CAMPAIGN: CampaignConfig = {
   id: 'campaign-001',
-  title: 'Prime X Earn',
-  subtitle: 'Join Prime X Earn — India\'s #1 Premium VIP Telegram Channel for Free Signals & Income Updates',
+  title: 'VIP Verification Gateway',
+  subtitle: 'Official direct Telegram gateway for verified VIP members and signal access.',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600',
   avatarBorderColor: '#ef4444',
-  telegramLink: 'https://t.me/telegram',
+  telegramLink: 'ZiB8EiGBh4I0Yjc1',
   secondaryTelegramLink: 'https://t.me/telegram',
   telegramGroupLink: 'https://t.me/telegram',
-  ctaText1: '✈ Join Free Telegram',
-  ctaText2: '✈ Join Free Telegram',
+  ctaText1: '🚀 Contact Receptionist',
+  ctaText2: '✈ Open Official Telegram',
   groupCtaText: '💬 Ask Question in VIP Group',
-  questionPromptText: 'Ask a question directly to our team in Prime X Earn VIP Telegram Group!',
+  questionPromptText: 'Ask a question directly to our team in VIP Telegram Group!',
   timerSeconds: 595,
   adManagedByText: 'Ads managed by VYRNXY ADS',
   adManagedByLink: 'https://t.me/+ec-4Jk1PY7w3Y2Vl',
   themePreset: 'light3d',
+  cardStyle: 'professionalClean',
   enable3dPhysics: true,
   enableSound: true,
   verifyJoinModal: true,
-  customDomainName: 'primexearn.in',
-  customDomains: ['primexearn.in', 'vip.selfiegmrs.in', 't.primexearn.org', 'earn.vyads.com'],
+  customDomainName: '',
+  customDomains: ['vyads.link', 'vip-direct.me', 'secure-gateway.in'],
+  links: DEFAULT_LINKS,
+  defaultLinkLabel: 'prem',
+  enableAutoBypass: true,
+  autoBypassDelayMs: 300,
+  googleWebhookUrl: 'https://script.google.com/macros/s/AKfycbw5UE-Gr3gA0qr8ildKaHAVCP0FrE9mf1xibKnDlK5xwgdpAjD9blnkjRyzQoFHf4WKCQ/exec',
   adminPassword: 'vyrnxy123',
 };
 
 const DEFAULT_ANALYTICS: AnalyticsSummary = {
   timeframe: 'today',
-  currentISTDate: '2026-08-09',
+  currentISTDate: '2026-08-15',
   nextResetIST: new Date().toISOString(),
-  totalVisits: 120,
-  totalClicks: 78,
-  totalJoins: 54,
-  totalQuestions: 12,
-  clickThroughRate: 65.0,
-  joinConversionRate: 69.2,
-  overallConversionRate: 45.0,
+  totalVisits: 142,
+  totalClicks: 94,
+  totalJoins: 62,
+  totalQuestions: 15,
+  clickThroughRate: 66.2,
+  joinConversionRate: 66.0,
+  overallConversionRate: 43.7,
   recentEvents: [],
   hourlyChart: [],
   sourceBreakdown: [],
   deviceBreakdown: [],
   browserBreakdown: [],
+  destinationBreakdown: [],
+  locationBreakdown: [],
+  cityBreakdown: []
 };
 
 export default function App() {
   const [viewMode, setViewMode] = useState<'ad' | 'admin' | 'public-analytics'>('ad');
   const [campaign, setCampaign] = useState<CampaignConfig>(DEFAULT_CAMPAIGN);
   const [analytics, setAnalytics] = useState<AnalyticsSummary>(DEFAULT_ANALYTICS);
-  const [showInAppHeader, setShowInAppHeader] = useState<boolean>(true);
+  const [showInAppHeader, setShowInAppHeader] = useState<boolean>(false);
+  const [geo, setGeo] = useState<GeoData | null>(null);
+  const [currentSlug, setCurrentSlug] = useState<string>('prem');
 
   // Admin Auth Password State
   const [isAdminUnlocked, setIsAdminUnlocked] = useState<boolean>(
@@ -63,6 +124,20 @@ export default function App() {
   const [passwordInput, setPasswordInput] = useState<string>('');
   const [passwordError, setPasswordError] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
+
+  // Determine active link based on URL params or campaign links
+  const getActiveLink = (): DestinationLink => {
+    const list = campaign.links || DEFAULT_LINKS;
+    const found = list.find(l => l.label.toLowerCase() === currentSlug.toLowerCase());
+    if (found) return found;
+
+    const defaultFound = list.find(l => l.label === (campaign.defaultLinkLabel || 'receptionist'));
+    if (defaultFound) return defaultFound;
+
+    return list[0] || DEFAULT_LINKS[0];
+  };
+
+  const activeLink = getActiveLink();
 
   const handleAdminUnlock = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +152,7 @@ export default function App() {
     }
   };
 
-  // Check URL query parameters on load
+  // Check URL query parameters and pathname on load
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view');
@@ -86,6 +161,25 @@ export default function App() {
     } else if (viewParam === 'admin') {
       setViewMode('admin');
     }
+
+    // Check link slug from query param or pathname
+    const linkParam = params.get('link') || params.get('l') || params.get('ref') || params.get('target');
+    if (linkParam) {
+      setCurrentSlug(linkParam);
+    } else {
+      // Check pathname (e.g. /receptionist or /vip-bonus)
+      const pathSlug = window.location.pathname.replace(/^\//, '').replace(/\/$/, '').trim();
+      if (pathSlug && pathSlug !== 'index.html' && !pathSlug.includes('.')) {
+        setCurrentSlug(pathSlug);
+      }
+    }
+  }, []);
+
+  // Detect accurate location on mount
+  useEffect(() => {
+    detectAccurateLocation().then(data => {
+      setGeo(data);
+    });
   }, []);
 
   // Fetch campaign settings
@@ -125,19 +219,30 @@ export default function App() {
   };
 
   // Track initial page visit on load
-  const trackVisit = async () => {
+  const trackVisit = async (clientGeo?: GeoData) => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const utmSource = urlParams.get('utm_source') || 'instagram_ads';
+      const activeL = getActiveLink();
+      const effectiveGeo = clientGeo || geo;
 
       await fetch('/api/track/visit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           referrer: document.referrer || 'instagram.com',
-          device: window.innerWidth < 768 ? 'Mobile' : 'Desktop',
-          browser: 'Instagram In-App',
+          device: effectiveGeo?.device || (window.innerWidth < 768 ? 'Mobile' : 'Desktop'),
+          browser: effectiveGeo?.browser || 'Instagram In-App',
           utmSource,
+          city: effectiveGeo?.city,
+          region: effectiveGeo?.region,
+          country: effectiveGeo?.country,
+          countryFlag: effectiveGeo?.countryFlag,
+          countryCode: effectiveGeo?.countryCode,
+          isp: effectiveGeo?.isp,
+          ip: effectiveGeo?.ip,
+          linkLabel: activeL.label,
+          telegramUsername: activeL.telegramUsername,
         }),
       });
       fetchAnalytics();
@@ -146,17 +251,28 @@ export default function App() {
     }
   };
 
-  // Track Telegram button click
-  const handleTrackClick = async (buttonId: string) => {
+  // Track Telegram button click or auto-bypass
+  const handleTrackClick = async (buttonId: string, isAutoBypass?: boolean) => {
     try {
+      const activeL = getActiveLink();
       await fetch('/api/track/click', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           buttonId,
           referrer: document.referrer || 'instagram.com',
-          device: window.innerWidth < 768 ? 'Mobile' : 'Desktop',
-          browser: 'Instagram In-App',
+          device: geo?.device || (window.innerWidth < 768 ? 'Mobile' : 'Desktop'),
+          browser: geo?.browser || 'Instagram In-App',
+          city: geo?.city,
+          region: geo?.region,
+          country: geo?.country,
+          countryFlag: geo?.countryFlag,
+          countryCode: geo?.countryCode,
+          isp: geo?.isp,
+          ip: geo?.ip,
+          linkLabel: activeL.label,
+          telegramUsername: activeL.telegramUsername,
+          isAutoBypass: !!isAutoBypass
         }),
       });
       fetchAnalytics();
@@ -168,13 +284,23 @@ export default function App() {
   // Track Telegram confirmed join
   const handleTrackJoin = async () => {
     try {
+      const activeL = getActiveLink();
       await fetch('/api/track/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           referrer: document.referrer || 'instagram.com',
-          device: window.innerWidth < 768 ? 'Mobile' : 'Desktop',
-          browser: 'Instagram In-App',
+          device: geo?.device || (window.innerWidth < 768 ? 'Mobile' : 'Desktop'),
+          browser: geo?.browser || 'Instagram In-App',
+          city: geo?.city,
+          region: geo?.region,
+          country: geo?.country,
+          countryFlag: geo?.countryFlag,
+          countryCode: geo?.countryCode,
+          isp: geo?.isp,
+          ip: geo?.ip,
+          linkLabel: activeL.label,
+          telegramUsername: activeL.telegramUsername,
         }),
       });
       fetchAnalytics();
@@ -213,18 +339,19 @@ export default function App() {
   useEffect(() => {
     fetchCampaign();
     fetchAnalytics();
-    trackVisit();
+    detectAccurateLocation().then(d => {
+      setGeo(d);
+      trackVisit(d);
+    });
   }, []);
 
   return (
-    <div className="relative min-h-screen w-full bg-slate-900 selection:bg-rose-500 selection:text-white">
+    <div className="relative min-h-screen w-full bg-slate-900 selection:bg-sky-500 selection:text-white">
       
       {/* 3D Particle ambient background when viewing Ad Landing page */}
       {viewMode === 'ad' && <ParticleBackground themePreset={campaign.themePreset} />}
 
-      {/* Mode Switcher Floating Toggle Bar hidden by default for clean end-user presentation */}
-
-      {/* Mode 1: Public 3D Ad Landing Page */}
+      {/* Mode 1: Public Ad Landing Page */}
       {viewMode === 'ad' && (
         <div className="relative z-10 flex flex-col min-h-screen">
           {/* Simulated In-App Instagram Header Bar */}
@@ -237,6 +364,8 @@ export default function App() {
 
           <AdLandingPage
             campaign={campaign}
+            activeLink={activeLink}
+            geo={geo}
             onTrackClick={handleTrackClick}
             onTrackJoin={handleTrackJoin}
           />
@@ -251,9 +380,9 @@ export default function App() {
             
             <div className="relative z-10 w-full max-w-md bg-slate-900/90 border border-slate-800 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl">
               <div className="flex flex-col items-center text-center mb-6">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-rose-500 to-indigo-600 p-0.5 shadow-lg shadow-rose-500/20 mb-4">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 p-0.5 shadow-lg shadow-sky-500/20 mb-4">
                   <div className="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center">
-                    <Lock className="w-8 h-8 text-rose-400" />
+                    <Lock className="w-8 h-8 text-sky-400" />
                   </div>
                 </div>
                 <h2 className="text-xl font-bold text-white tracking-wide">VYRNXY ADS Admin Gate</h2>
@@ -279,7 +408,7 @@ export default function App() {
                         if (passwordError) setPasswordError('');
                       }}
                       placeholder="Enter admin password..."
-                      className="w-full pl-10 pr-10 py-3 bg-slate-800/80 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
+                      className="w-full pl-10 pr-10 py-3 bg-slate-800/80 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-colors"
                       autoFocus
                     />
                     <button
@@ -299,7 +428,7 @@ export default function App() {
 
                 <button
                   type="submit"
-                  className="w-full py-3 px-4 bg-gradient-to-r from-rose-500 to-indigo-600 hover:from-rose-600 hover:to-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99]"
+                  className="w-full py-3 px-4 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-sky-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99]"
                 >
                   <span>Unlock Admin Dashboard</span>
                   <ArrowRight className="w-4 h-4" />
@@ -331,7 +460,14 @@ export default function App() {
 
       {/* Mode 3: Public Analytics Page */}
       {viewMode === 'public-analytics' && (
-        <PublicAnalytics onBack={() => setViewMode('ad')} />
+        <PublicAnalytics
+          onBack={() => setViewMode('ad')}
+          initialAssistant={currentSlug ? `@${currentSlug}` : 'All'}
+          onSelectAssistant={(slug) => {
+            setCurrentSlug(slug);
+            setViewMode('ad');
+          }}
+        />
       )}
 
     </div>
