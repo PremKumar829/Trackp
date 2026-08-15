@@ -95,9 +95,19 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         setCampaign(data);
+        localStorage.setItem('vyrnxy_campaign_data', JSON.stringify(data));
+      } else {
+        const saved = localStorage.getItem('vyrnxy_campaign_data');
+        if (saved) setCampaign(JSON.parse(saved));
       }
     } catch (err) {
       console.warn('Backend server connecting, using local campaign defaults');
+      const saved = localStorage.getItem('vyrnxy_campaign_data');
+      if (saved) {
+        try {
+          setCampaign(JSON.parse(saved));
+        } catch (_) {}
+      }
     }
   };
 
@@ -177,6 +187,7 @@ export default function App() {
   const handleUpdateCampaign = async (updated: Partial<CampaignConfig>) => {
     const newConfig = { ...campaign, ...updated };
     setCampaign(newConfig);
+    localStorage.setItem('vyrnxy_campaign_data', JSON.stringify(newConfig));
 
     try {
       await fetch('/api/campaign', {
